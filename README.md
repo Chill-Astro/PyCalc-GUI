@@ -7,7 +7,7 @@ It's not revolutionary, but it's helpful! Considering you don't need prompting a
 
 And what's more? It's very lightweight! 13.7 MB for a GUI Calculator!
 
-![image](https://github.com/user-attachments/assets/ac42d7a2-4760-4bda-87b3-aa0badfb71be)
+![image](https://github.com/user-attachments/assets/88cdd1dc-8bcf-411d-a714-de9a2d8ffefa)
 
 Want to add more Calculation Options? Let's see what comes next!
 NOTE: THIS CODE IS AI GENERATED! The Calculation part was imported from PyCalc!
