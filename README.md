@@ -1,13 +1,20 @@
 PyCalc : A Simple and Lightweight Calculator. Made in Python!
 
-Heron's Formula, Compound Interest, etc., many things we learn, but overtime it becomes boring.
-Asking ChatGPT? Or using an online solver? Well, why not do it offline?
-Presenting PyCalc! Made by only 1 person and AI, with all of us in mind! 
-It's not revolutionary, but it's helpful! Considering you don't need prompting anymore!
+Features Include :
 
-And what's more? It's very lightweight! 13.7 MB for a GUI Calculator!
+- Dozens of Calculation Options ✅
+- Extemely Lightweight [It's a GUI App]. ✅
+- Clean and Mordern GUI. ✅
+- Automatic Theme Adaptation [System Theme] ✅
+- Fast and Error-Proof Calculations. ✅
+- High Precision for decimals. ✅
 
-![image](https://github.com/user-attachments/assets/88cdd1dc-8bcf-411d-a714-de9a2d8ffefa)
+Installation and Requirements :
 
-Want to add more Calculation Options? Let's see what comes next!
-NOTE: THIS CODE IS AI GENERATED! The Calculation part was imported from PyCalc!
+- Any system with Python installed.
+- Requires customtkinter package to be installed via pip.
+- No installation needed if using Installer or PyCalcGUI-Portable.exe on Windows Systems!
+
+![image](https://github.com/user-attachments/assets/64817535-fbf5-414d-b5f4-ebb8b8d3fadc)
+
+Simple! Powerful! Lightweight!
