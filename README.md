@@ -1,5 +1,7 @@
 PyCalc : A Simple and Lightweight Calculator. Made in Python!
 
+NOTE : PyCalc GUI has been discontinued and will no longer be updated!
+
 Features Include :
 
 - Dozens of Calculation Options ✅
@@ -14,7 +16,5 @@ Installation and Requirements :
 - Any system with Python installed.
 - Requires customtkinter package to be installed via pip.
 - No installation needed if using Installer or PyCalcGUI-Portable.exe on Windows Systems!
-
-![image](https://github.com/user-attachments/assets/64817535-fbf5-414d-b5f4-ebb8b8d3fadc)
 
 Simple! Powerful! Lightweight!
