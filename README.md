@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="https://github.com/Chill-Astro/PyCalc-SE/blob/main/PyCalc-SE.ico" width="120px" height="120px" alt="Calculator Logo">
+  <img src="https://github.com/Chill-Astro/PyCalc-GUI/blob/main/PyCalc-GUI.ico" width="128px" height="128px" alt="PyCalc Logo">
 </p>
-<h1 align="center">PyCalc-SE v1.4</h1>
+<h1 align="center">PyCalc-GUI v1.1</h1>
 
-PyCalc - SE is an Open-Source, Cross-Platform and a Simpler GUI Version of PyCalc consisting of the Basic Calculator!
+PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [PyCalc-SE](https://github.com/Chill-Astro/PyCalc-SE) consisting of the Basic Calculator!
  
 ## Key Features :
 
@@ -16,23 +16,23 @@ PyCalc - SE is an Open-Source, Cross-Platform and a Simpler GUI Version of PyCal
 
 ---
 
-## Installing PyCalc-SE from Winget :
+## Installing PyCalc-GUI from Winget [ Coming Soon! ] :
 
-    winget install PyCalc-SE
-    
+    winget install PyCalc-GUI
+
 ---
 
 ## Preview :
 
-![image](https://github.com/user-attachments/assets/76a5953d-d31e-4a58-9a31-d533e51540e1)
+![image](https://github.com/user-attachments/assets/f9498525-a38a-449f-8378-80c8ade4a4d2)
 
----
-    
+---    
+
 ## Installation and Requirements :
 
 - Any system with Python installed.
-- Requires PySide6 package to be installed via pip!
-- No Python installation needed if using Installer or `PyCalc-SE.exe` on Windows Systems or `PyCalc-SE` file on Linux Systems!
+- Requires PySide6 & Requests package to be installed via pip!
+- No Python installation needed if using Installer or `PyCalc-GUI.exe` on Windows Systems or `PyCalc-GUI` file on Linux Systems!
 
 ---
 
