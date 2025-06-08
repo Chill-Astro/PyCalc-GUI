@@ -1,0 +1,52 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [released]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install requests
+        pip install pyside6
+    - name: Build macOS executable
+      run: pyinstaller --onefile --noconsole PyCalc-SE.py
+    - name: Upload macOS artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-executable
+        path: dist/PyCalc-SE
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install requests
+        pip install pyside6
+    - name: Build Linux executable
+      run: pyinstaller --onefile --noconsole PyCalc-SE.py
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-executable
+        path: dist/PyCalc-SE
