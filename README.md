@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">PyCalc-GUI v1.1</h1>
 
-PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [PyCalc-SE](https://github.com/Chill-Astro/PyCalc-SE) consisting of the Basic Calculator!
+PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [PyCalc-SE](https://github.com/Chill-Astro/PyCalc-SE) consisting of Math Functions from [PyCalc](https://github.com/Chill-Astro/PyCalc)!
  
 ## Key Features :
 
