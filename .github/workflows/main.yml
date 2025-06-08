@@ -22,7 +22,7 @@ jobs:
         pip install requests
         pip install pyside6
     - name: Build macOS executable
-      run: pyinstaller --onefile --noconsole PyCalc-SE.py
+      run: pyinstaller --onefile --noconsole PyCalc-GUI.py
     - name: Upload macOS artifact
       uses: actions/upload-artifact@v4
       with:
@@ -44,7 +44,7 @@ jobs:
         pip install requests
         pip install pyside6
     - name: Build Linux executable
-      run: pyinstaller --onefile --noconsole PyCalc-SE.py
+      run: pyinstaller --onefile --noconsole PyCalc-GUI.py
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
