@@ -16,7 +16,7 @@ PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [Py
 
 ---
 
-## Installing PyCalc-GUI from Winget [ Coming Soon! ] :
+## Installing PyCalc-GUI from Winget :
 
     winget install PyCalc-GUI
 
