@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "PyCalc-GUI"
-#define MyAppVersion "1.1"
+#define MyAppVersion "1.3"
 #define MyAppPublisher "Chill-Astro"
 #define MyAppURL "https://github.com/Chill-Astro/PyCalc-GUI"
 #define MyAppExeName "PyCalc-GUI.exe"
@@ -78,7 +78,7 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\Master\Chill-Astro\PyCalc-GUI\dist\*"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Master\Chill-Astro\PyCalc-GUI\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

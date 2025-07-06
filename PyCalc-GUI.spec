@@ -5,7 +5,7 @@ a = Analysis(
     ['PyCalc-GUI.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('Inter.ttf', '.'), ('icomoon.ttf', '.'), ('PyCalc-GUI.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

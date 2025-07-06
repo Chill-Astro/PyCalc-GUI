@@ -9,19 +9,27 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QIcon, QFontDatabase, QFont
 
+# Helper for bundled resources (PyInstaller)
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
+
 UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/2e23a1b0ccb7bdbaa63c0dd128ddbfdb27ef814e/PyC_GUI_V.txt"  # Gist URL
 
 class Calculator(QWidget):
     def __init__(self):
         super().__init__()
-        self.CURRENT_VERSION = "1.1" # Massive Rewrite
+        self.CURRENT_VERSION = "1.2" # Self-Contained Update
         self.setWindowTitle("PyCalc - GUI")            
         self.setMinimumSize(400, 500)
-        icon_path = os.path.join(".", "Pycalc-GUI.ico")
+        # Set window icon using resource_path (bundled with exe)
+        icon_path = resource_path("PyCalc-GUI.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
-        # Load custom font Inter.ttf
-        font_id = QFontDatabase.addApplicationFont("Inter.ttf")
+        # Load custom font Inter.ttf (bundled)
+        font_id = QFontDatabase.addApplicationFont(resource_path("Inter.ttf"))
         font_families = QFontDatabase.applicationFontFamilies(font_id)
         if font_families:
             custom_font = QFont(font_families[0], 14)
@@ -172,8 +180,8 @@ class Calculator(QWidget):
         sidebar_layout.setContentsMargins(2, 8, 2, 8)
         # Sidebar buttons (icon only)
         self.sidebar_buttons = []
-        # Try to load icomoon.ttf
-        icomoon_font_id = QFontDatabase.addApplicationFont("icomoon.ttf")
+        # Try to load icomoon.ttf (bundled)
+        icomoon_font_id = QFontDatabase.addApplicationFont(resource_path("icomoon.ttf"))
         icomoon_families = QFontDatabase.applicationFontFamilies(icomoon_font_id)
         use_icomoon = bool(icomoon_families)
         if use_icomoon:
