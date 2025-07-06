@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://github.com/Chill-Astro/PyCalc-GUI/blob/main/PyCalc-GUI.ico" width="128px" height="128px" alt="PyCalc Logo">
 </p>
-<h1 align="center">PyCalc-GUI v1.1</h1>
+<h1 align="center">PyCalc-GUI v1.2</h1>
 
 PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [PyCalc-SE](https://github.com/Chill-Astro/PyCalc-SE) consisting of Math Functions from [PyCalc](https://github.com/Chill-Astro/PyCalc)!
  
@@ -32,7 +32,7 @@ PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [Py
 
 - Any system with Python installed.
 - Requires PySide6 & Requests package to be installed via pip!
-- No Python installation needed if using Installer or `PyCalc-GUI.exe` on Windows Systems or `PyCalc-GUI` file on Linux Systems!
+- No Python installation needed if using Installer or Prebuilt Executables!
 
 ---
 
