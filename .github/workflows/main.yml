@@ -22,7 +22,7 @@ jobs:
         pip install requests
         pip install pyside6
     - name: Build macOS executable
-      run: pyinstaller -F --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyCalc-GUIico;." PyCalc-GUI.py --noconsole
+      run: pyinstaller -F --add-data "Inter.ttf:." --add-data "icomoon.ttf:." --add-data "PyCalc-GUI.ico:." PyCalc-GUI.py --noconsole
     - name: Upload macOS artifact
       uses: actions/upload-artifact@v4
       with:
@@ -44,7 +44,7 @@ jobs:
         pip install requests
         pip install pyside6
     - name: Build Linux executable
-      run: pyinstaller -F --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyCalc-GUIico;." PyCalc-GUI.py --noconsole
+      run: pyinstaller -F --add-data "Inter.ttf:." --add-data "icomoon.ttf:." --add-data "PyCalc-GUI.ico:." PyCalc-GUI.py --noconsole
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
