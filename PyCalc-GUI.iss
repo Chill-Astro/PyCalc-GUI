@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "PyCalc-GUI"
-#define MyAppVersion "1.3"
+#define MyAppVersion "1.2"
 #define MyAppPublisher "Chill-Astro"
 #define MyAppURL "https://github.com/Chill-Astro/PyCalc-GUI"
 #define MyAppExeName "PyCalc-GUI.exe"
@@ -23,6 +23,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\Chill-Astro\{#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
+LicenseFile=LICENSE.txt
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
 ; on anything but x64 and Windows 11 on Arm.
 ArchitecturesAllowed=x64compatible
@@ -36,7 +37,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputBaseFilename=PyCalc-GUI-Setup
+OutputBaseFilename=PyC_GUI-Setup
 SolidCompression=yes
 WizardStyle=modern
 DisableWelcomePage=no
