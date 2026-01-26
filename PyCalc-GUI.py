@@ -16,25 +16,19 @@ def resource_path(relative_path):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
 
-UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/2e23a1b0ccb7bdbaa63c0dd128ddbfdb27ef814e/PyC_GUI_V.txt"  # Gist URL
+UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/cc42d26ad09a37c594401d82fcbb8d2fa97f67ef/PyC_GUI_V.txt"  # Gist URL
 
 class Calculator(QWidget):
     def __init__(self):
         super().__init__()
         self.CURRENT_VERSION = "1.2" # Self-Contained Update
-        self.setWindowTitle("PyCalc - GUI")            
+        self.setWindowTitle("PyCalc - GUI")
         self.setMinimumSize(400, 500)
         # Set window icon using resource_path (bundled with exe)
         icon_path = resource_path("PyCalc-GUI.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
-        # Load custom font Inter.ttf (bundled)
-        font_id = QFontDatabase.addApplicationFont(resource_path("Inter.ttf"))
-        font_families = QFontDatabase.applicationFontFamilies(font_id)
-        if font_families:
-            custom_font = QFont(font_families[0], 14)
-            QApplication.instance().setFont(custom_font)
-            self.setFont(custom_font)
+        # ...existing code...
         # Restore window geometry
         self.settings = QSettings("ChillAstro", "PyCalc-GUI")
         geometry = self.settings.value("geometry")
@@ -45,11 +39,12 @@ class Calculator(QWidget):
         self.reset()
         self.check_for_updates()
         # --- Theme polling for runtime changes ---
-        from PySide6.QtCore import QTimer
+        from PySide6.QtCore import QTimer, Qt
         self._last_theme = self._detect_os_theme()
         self._theme_timer = QTimer(self)
+        self._theme_timer.setTimerType(Qt.CoarseTimer)  # Use enum for less CPU
         self._theme_timer.timeout.connect(self._check_theme_change)
-        self._theme_timer.start(100)  # check every 0.1 seconds for more instant theme change
+        self._theme_timer.start(250)  # check every 0.25 seconds
 
     def closeEvent(self, event):
         # Save window geometry
@@ -57,7 +52,7 @@ class Calculator(QWidget):
         super().closeEvent(event)
 
     def _detect_os_theme(self):
-        # Returns 'dark' or 'light'
+        # Returns 'dark' or 'light'. Enhanced for KDE (KWin) and GNOME on Wayland.
         try:
             if sys.platform == 'win32':
                 import winreg
@@ -71,31 +66,108 @@ class Calculator(QWidget):
                 ], capture_output=True, text=True)
                 return 'dark' if 'Dark' in result.stdout else 'light'
             elif sys.platform.startswith('linux'):
-                # Try darkman if available
                 import shutil
+                import subprocess
+                # Wayland only: check XDG_SESSION_TYPE
+                if os.environ.get('XDG_SESSION_TYPE', '').lower() == 'wayland':
+                    desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
+                    # GNOME Wayland
+                    if 'gnome' in desktop:
+                        try:
+                            # GNOME 42+ uses color-scheme, fallback to gtk-theme
+                            result = subprocess.run([
+                                'gsettings', 'get', 'org.gnome.desktop.interface', 'color-scheme'
+                            ], capture_output=True, text=True)
+                            if 'dark' in result.stdout.lower():
+                                return 'dark'
+                            elif 'light' in result.stdout.lower():
+                                return 'light'
+                        except Exception:
+                            pass
+                        # Fallback: check gtk-theme
+                        try:
+                            result = subprocess.run([
+                                'gsettings', 'get', 'org.gnome.desktop.interface', 'gtk-theme'
+                            ], capture_output=True, text=True)
+                            if 'dark' in result.stdout.lower():
+                                return 'dark'
+                        except Exception:
+                            pass
+                    # KDE (KWin) Wayland
+                    elif 'kde' in desktop or 'plasma' in desktop:
+                        # KDE Plasma 5.24+ uses color-scheme
+                        try:
+                            result = subprocess.run([
+                                'qdbus', 'org.kde.KWin', '/KWin', 'org.kde.KWin.supportInformation'
+                            ], capture_output=True, text=True)
+                            # Not strictly needed, but confirms KWin is running
+                        except Exception:
+                            pass
+                        # Try reading kdeglobals config for color scheme
+                        kdeglobals_path = os.path.expanduser('~/.config/kdeglobals')
+                        if os.path.exists(kdeglobals_path):
+                            try:
+                                with open(kdeglobals_path, 'r', encoding='utf-8') as f:
+                                    for line in f:
+                                        if line.strip().startswith('ColorScheme='):  # KDE6
+                                            scheme = line.strip().split('=', 1)[-1].lower()
+                                            if 'dark' in scheme:
+                                                return 'dark'
+                                            elif 'light' in scheme:
+                                                return 'light'
+                                        elif line.strip().startswith('name='):  # KDE5
+                                            scheme = line.strip().split('=', 1)[-1].lower()
+                                            if 'dark' in scheme:
+                                                return 'dark'
+                                            elif 'light' in scheme:
+                                                return 'light'
+                            except Exception:
+                                pass
+                        # Fallback: check KDE_COLOR_SCHEME env
+                        kde_scheme = os.environ.get('KDE_COLOR_SCHEME', '').lower()
+                        if 'dark' in kde_scheme:
+                            return 'dark'
+                        elif 'light' in kde_scheme:
+                            return 'light'
+                    # Fallback for other desktops on Wayland
+                    gtk_theme = os.environ.get('GTK_THEME', '').lower()
+                    if 'dark' in gtk_theme:
+                        return 'dark'
+                    elif 'light' in gtk_theme:
+                        return 'light'
+                # Try darkman if available (works for both X11/Wayland)
                 if shutil.which('darkman'):
-                    import subprocess
-                    result = subprocess.run(['darkman', 'get'], capture_output=True, text=True)
-                    return 'dark' if 'dark' in result.stdout.lower() else 'light'
-                # Try GTK_THEME or XDG_CURRENT_DESKTOP heuristics
+                    try:
+                        result = subprocess.run(['darkman', 'get'], capture_output=True, text=True)
+                        if 'dark' in result.stdout.lower():
+                            return 'dark'
+                        elif 'light' in result.stdout.lower():
+                            return 'light'
+                    except Exception:
+                        pass
+                # Fallback: try GTK_THEME or KDE_COLOR_SCHEME
                 gtk_theme = os.environ.get('GTK_THEME', '').lower()
                 if 'dark' in gtk_theme:
                     return 'dark'
-                # Try KDE color scheme
+                elif 'light' in gtk_theme:
+                    return 'light'
                 kde_scheme = os.environ.get('KDE_COLOR_SCHEME', '').lower()
                 if 'dark' in kde_scheme:
                     return 'dark'
-                # Try XDG_CURRENT_DESKTOP for GNOME/KDE
+                elif 'light' in kde_scheme:
+                    return 'light'
+                # Fallback: try XDG_CURRENT_DESKTOP for GNOME/KDE
                 desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
                 if 'gnome' in desktop or 'kde' in desktop:
                     # Try to read gsettings (GNOME)
                     try:
-                        import subprocess
                         result = subprocess.run([
                             'gsettings', 'get', 'org.gnome.desktop.interface', 'color-scheme'
                         ], capture_output=True, text=True)
                         if 'dark' in result.stdout.lower():
                             return 'dark'
+                        elif 'light' in result.stdout.lower():
+                            return 'light'
                     except Exception:
                         pass
                 # Default to dark
@@ -148,22 +220,36 @@ class Calculator(QWidget):
         """
 
     def light_stylesheet(self):
+        # Modern light theme: structure matches dark theme, but with much lighter blues for all blue elements
         return """
-            QWidget { background: #f5f6fa; }
+            QWidget { background: #f7fafd; }
             QLabel { color: #23272e; }
             QLabel#display { color: #23272e; }
-            QLabel#history { color: #888; }
+            QLabel#history { color: #7b8794; }
             QPushButton {
-                background: #e6e9f0; color: #23272e; border: none; border-radius: 5px;
+                background: #f0f4fa; color: #23272e; border: none; border-radius: 5px;
                 font-size: 15px; padding: 8px;
+                transition: background 0.2s;
             }
-            QPushButton:pressed { background: #d1d5e0; }
-            QPushButton[op="true"] { background: #dbeafe; color: #23272e; }
-            QPushButton[op="true"]:pressed { background: #bcd0ee; }
-            QPushButton[fn="true"] { background: #e0e7ef; color: #4b5563; }
-            QPushButton[fn="true"]:pressed { background: #cfd8e3; }
-            QPushButton[eq="true"] { background: #2563eb; color: #fff; }
-            QPushButton[eq="true"]:pressed { background: #1d4ed8; }
+            QPushButton:pressed { background: #e0e7ef; }
+            QPushButton[op="true"] {
+                background: #e3e8f0; color: #23272e;
+            }
+            QPushButton[op="true"]:pressed {
+                background: #bae6fd;
+            }
+            QPushButton[fn="true"] {
+                background: #e0e7ef; color: #4b5563;
+            }
+            QPushButton[fn="true"]:pressed {
+                background: #cbd5e1;
+            }
+            QPushButton[eq="true"] {
+                background: #e0f2fe; color: #23272e;
+            }
+            QPushButton[eq="true"]:pressed {
+                background: #bae6fd;
+            }
         """
 
     def initSidebarUI(self):
@@ -194,14 +280,14 @@ class Calculator(QWidget):
                 '\ue919',  # Quadratic Equation
                 '\ue904',  # Factorial
                 '\ue915',  # Discount Price
-                '≈',       # Approximation (always tilden)
+                '≈',       # Approximation
                 '\ue911',  # Prime Checker
                 '\ue914',  # Right Triangle
             ]
         else:
             icomoon_font = None
             icon_codes = [
-                'C', '△', 'SI', 'CI', 'QE', 'x!', '%', '≈', '2', '∆?'
+                'C', '△', 'SI', 'CI', 'QE', 'x!', '%', '≈', 'P', 'R'
             ]
         sidebar_btn_data = [
             ("Calculator", icon_codes[0]),
@@ -459,18 +545,14 @@ class Calculator(QWidget):
         self.history.setObjectName("history")
         self.history.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.history.setStyleSheet("font-size: 12px; padding-top: 20px;")
-        font_id = QFontDatabase.addApplicationFont("Inter.ttf")
-        font_families = QFontDatabase.applicationFontFamilies(font_id)
-        if font_families:
-            self.history.setFont(QFont(font_families[0], 12))
+        # ...existing code...
         vbox.addWidget(self.history)
         self.display = QLabel("0")
         self.display.setObjectName("display")
         self.display.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.display.setMinimumHeight(75)
         self.display.setStyleSheet("font-size: 30px; font-weight: bold; padding-right: 0.5px;")
-        if font_families:
-            self.display.setFont(QFont(font_families[0], 28, QFont.Bold))
+        # ...existing code...
         vbox.addWidget(self.display)
         grid = QGridLayout()
         grid.setSpacing(6)
@@ -488,8 +570,7 @@ class Calculator(QWidget):
             for j, (text, role) in enumerate(row):
                 btn = QPushButton(text)
                 btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-                if font_families:
-                    btn.setFont(QFont(font_families[0], 16))
+                # ...existing code...
                 if role == 'op':
                     btn.setProperty('op', True)
                 elif role == 'eq':
@@ -1115,7 +1196,7 @@ class Calculator(QWidget):
                     elif latest_version == self.parent.CURRENT_VERSION:
                         msg = "🎉 PyCalc-GUI is up to date!"
                     elif latest_version < self.parent.CURRENT_VERSION:
-                        msg = "⚠️ This is a Dev. Build of PyCalc-SE!"
+                        msg = "⚠️ This is a Dev. Build of PyCalc-GUI!"
                     else:
                         msg = "🎉 PyCalc-GUI is up to date!"
                 except Exception:
