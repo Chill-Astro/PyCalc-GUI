@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
+import os
 import sys
 import math
-import os.path
+import shutil
 import requests
-from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QSizePolicy, QStackedWidget, QLineEdit, QFrame
-)
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QLineEdit, QSizePolicy, QStackedWidget, QFrame, QStyle)
+from PySide6.QtGui import QIcon, QFont, QFontDatabase
+from PySide6.QtCore import Qt, QSettings, QSize
 from PySide6.QtGui import QIcon, QFontDatabase, QFont
 
 # Helper for bundled resources (PyInstaller)
@@ -19,11 +19,54 @@ def resource_path(relative_path):
 UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/cc42d26ad09a37c594401d82fcbb8d2fa97f67ef/PyC_GUI_V.txt"  # Gist URL
 
 class Calculator(QWidget):
+    def initAboutUI(self, use_icomoon, icomoon_font):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(16)
+        layout.setContentsMargins(32, 32, 32, 32)
+        layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        # App icon
+        icon_label = QLabel()
+        icon_path = resource_path("PyCalc-GUI.ico")
+        if os.path.exists(icon_path):
+            icon_label.setPixmap(QIcon(icon_path).pixmap(128, 128))
+        icon_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(icon_label, alignment=Qt.AlignCenter)
+        # App name
+        name_label = QLabel("<b>PyCalc - GUI</b>")
+        name_label.setAlignment(Qt.AlignCenter)
+        name_label.setStyleSheet("font-size: 22px; margin-top: 8px;")
+        layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        # Author
+        author_label = QLabel("Developer : Chill-Astro Software")
+        author_label.setAlignment(Qt.AlignCenter)
+        author_label.setStyleSheet("font-size: 15px; color: #888;")
+        layout.addWidget(author_label, alignment=Qt.AlignCenter)
+        # Version
+        version_label = QLabel(f"Version : {self.CURRENT_VERSION}")
+        version_label.setAlignment(Qt.AlignCenter)
+        version_label.setStyleSheet("font-size: 15px; color: #888;")
+        layout.addWidget(version_label, alignment=Qt.AlignCenter)
+        # Check for updates button
+        update_btn = QPushButton("Check for updates")
+        update_btn.setFixedHeight(36)
+        update_btn.setFixedWidth(180)
+        update_btn.setProperty('eq', True)
+        update_btn.setStyleSheet("font-size: 15px;")
+        update_btn.clicked.connect(self.check_for_updates_about)
+        layout.addWidget(update_btn, alignment=Qt.AlignCenter)
+        # Update status (now below the button)
+        self.about_update_status = QLabel("")
+        self.about_update_status.setAlignment(Qt.AlignCenter)
+        self.about_update_status.setStyleSheet("font-size: 15px; margin-top: 8px;")
+        layout.addWidget(self.about_update_status, alignment=Qt.AlignCenter)
+        layout.addStretch(1)
+        return widget
     def __init__(self):
         super().__init__()
-        self.CURRENT_VERSION = "1.2" # Self-Contained Update
+        self.CURRENT_VERSION = "1.3" # About Section + Bug Fixes
         self.setWindowTitle("PyCalc - GUI")
-        self.setMinimumSize(400, 500)
+        self.setMinimumSize(430, 540)
         # Set window icon using resource_path (bundled with exe)
         icon_path = resource_path("PyCalc-GUI.ico")
         if os.path.exists(icon_path):
@@ -37,7 +80,6 @@ class Calculator(QWidget):
         self.initSidebarUI()  # <-- new sidebar UI
         self.apply_theme()
         self.reset()
-        self.check_for_updates()
         # --- Theme polling for runtime changes ---
         from PySide6.QtCore import QTimer, Qt
         self._last_theme = self._detect_os_theme()
@@ -270,6 +312,7 @@ class Calculator(QWidget):
         icomoon_font_id = QFontDatabase.addApplicationFont(resource_path("icomoon.ttf"))
         icomoon_families = QFontDatabase.applicationFontFamilies(icomoon_font_id)
         use_icomoon = bool(icomoon_families)
+        from PySide6.QtWidgets import QStyle
         if use_icomoon:
             icomoon_font = QFont(icomoon_families[0], 14)
             icon_codes = [
@@ -283,11 +326,12 @@ class Calculator(QWidget):
                 '≈',       # Approximation
                 '\ue911',  # Prime Checker
                 '\ue914',  # Right Triangle
+                None,       # About (standard info icon)
             ]
         else:
             icomoon_font = None
             icon_codes = [
-                'C', '△', 'SI', 'CI', 'QE', 'x!', '%', '≈', 'P', 'R'
+                'C', '△', 'SI', 'CI', 'QE', 'x!', '%', '≈', 'P', 'R', None
             ]
         sidebar_btn_data = [
             ("Calculator", icon_codes[0]),
@@ -300,18 +344,28 @@ class Calculator(QWidget):
             ("Approximation", icon_codes[7]),
             ("Prime No. Checker", icon_codes[8]),
             ("Right Triangle Checker", icon_codes[9]),
+            ("About", icon_codes[10]),
         ]
         for idx, (tooltip, icon_text) in enumerate(sidebar_btn_data):
-            btn = QPushButton(icon_text)
-            btn.setToolTip(tooltip)
-            btn.setFixedHeight(40)
-            btn.setFixedWidth(42)
-            btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            btn.setProperty('fn', True)
-            btn.setStyleSheet("font-size: 10px; font-weight: bold;")
-            # Set font for icomoon icons only for Prime Checker and Right Triangle
-            if use_icomoon and idx in (8, 9):
-                btn.setFont(icomoon_font)
+            if idx == 10:
+                # About/info button uses Unicode ⓘ
+                btn = QPushButton('🛈')
+                btn.setToolTip(tooltip)
+                btn.setFixedHeight(40)
+                btn.setFixedWidth(42)
+                btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+                btn.setProperty('fn', True)
+                btn.setStyleSheet("font-size: 18px; font-weight: bold; background: none; border: none;")
+            else:
+                btn = QPushButton(icon_text)
+                btn.setToolTip(tooltip)
+                btn.setFixedHeight(40)
+                btn.setFixedWidth(42)
+                btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+                btn.setProperty('fn', True)
+                btn.setStyleSheet("font-size: 10px; font-weight: bold;")
+                if use_icomoon and idx in (8, 9):
+                    btn.setFont(icomoon_font)
             btn.clicked.connect(lambda _, i=idx: self.switch_calculator(i))
             sidebar_layout.addWidget(btn, alignment=Qt.AlignHCenter)
             self.sidebar_buttons.append(btn)
@@ -330,9 +384,44 @@ class Calculator(QWidget):
         self.stack.addWidget(self.initApproximationUI())
         self.stack.addWidget(self.initPrimeCheckerUI())
         self.stack.addWidget(self.initRightTriangleUI())
+        self.stack.addWidget(self.initAboutUI(use_icomoon, icomoon_font))
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
         self.switch_calculator(0)
+
+    def check_for_updates_about(self):
+        from PySide6.QtCore import QThread, Signal
+
+        class UpdateCheckThread(QThread):
+            update_message = Signal(str)
+            def __init__(self, parent=None, current_version=None):
+                super().__init__(parent)
+                self.parent = parent
+                self.current_version = current_version
+            def run(self):
+                try:
+                    response = requests.get(UPDATE_VERSION_URL, timeout=5)
+                    response.raise_for_status()
+                    latest_version = response.text.strip()
+                    if latest_version > self.current_version:
+                        msg = f"🎉 PyCalc-GUI v{latest_version} is OUT NOW!"
+                    elif latest_version == self.current_version:
+                        msg = "🎉 PyCalc-GUI is up to date!"
+                    elif latest_version < self.current_version:
+                        msg = "⚠️ WARNING! THIS IS NOT A PUBLIC RELEASE!"
+                    else:
+                        msg = "🎉 PyCalc-GUI is up to date!"
+                except Exception:
+                    msg = "⚠️ Please check your Internet Connection."
+                self.update_message.emit(msg)
+
+        self.update_thread = UpdateCheckThread(self, self.CURRENT_VERSION)
+        self.update_thread.update_message.connect(self.show_about_update_message)
+        self.update_thread.start()
+
+    def show_about_update_message(self, msg):
+        self.about_update_status.setText(msg)
+        self.about_update_status.setStyleSheet("font-size: 15px; margin-top: 8px;")
 
     def switch_calculator(self, idx):
         self.stack.setCurrentIndex(idx)
@@ -584,37 +673,37 @@ class Calculator(QWidget):
 
     def initHeronUI(self):
         widget = QWidget()
-        widget.setMinimumWidth(340)
-        widget.setMinimumHeight(420)
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setAlignment(Qt.AlignCenter)
+        outer = QVBoxLayout(widget)
+        outer.setAlignment(Qt.AlignCenter)
+        inner = QVBoxLayout()
+        inner.setSpacing(12)
+        inner.setContentsMargins(24, 24, 24, 24)
+        inner.setAlignment(Qt.AlignCenter)
         self.heron_inputs = [QLineEdit() for _ in range(3)]
         labels = ["First Side [a] :", "Second Side [b] :", "Third Side [c] :"]
         for i, label in enumerate(labels):
             lbl = QLabel(f"<b>{label}</b>")
             lbl.setAlignment(Qt.AlignCenter)
             lbl.setStyleSheet("font-size: 16px;")
-            layout.addWidget(lbl, alignment=Qt.AlignCenter)
+            inner.addWidget(lbl, alignment=Qt.AlignCenter)
             self.heron_inputs[i].setPlaceholderText("")
             self.heron_inputs[i].setFixedWidth(180)
             self.heron_inputs[i].setFixedHeight(32)
             self.heron_inputs[i].setStyleSheet("font-size: 15px;")
-            layout.addWidget(self.heron_inputs[i], alignment=Qt.AlignCenter)
+            inner.addWidget(self.heron_inputs[i], alignment=Qt.AlignCenter)
         btn = QPushButton("Calculate")
         btn.setFixedHeight(36)
         btn.setFixedWidth(120)
         btn.setProperty('eq', True)
         btn.setStyleSheet("font-size: 15px;")
         btn.clicked.connect(self.calculate_heron)
-        layout.addWidget(btn, alignment=Qt.AlignCenter)
+        inner.addWidget(btn, alignment=Qt.AlignCenter)
         self.heron_output = QLabel("OUTPUT AREA")
         self.heron_output.setAlignment(Qt.AlignCenter)
         self.heron_output.setFixedHeight(28)
         self.heron_output.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.heron_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
+        inner.addWidget(self.heron_output, alignment=Qt.AlignCenter)
+        outer.addLayout(inner)
         return widget
 
     def initSimpleInterestUI(self):
