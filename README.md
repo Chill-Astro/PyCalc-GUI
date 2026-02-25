@@ -36,6 +36,26 @@ PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [Py
 
 ---
 
+## HALL OF FAME 👍 : 
+
+// Will add Forked Repos which are genuinely good. 🤩 I will list everything Good about them.
+
+---
+
+## HALL OF NEUTRALITY 😐 :
+
+// Will add Inactive Forks. Uh yeah that's it atleast it's Forking not Cloning! 😅
+
+- mattycm1193-sys/PyCalc-GUI
+
+---
+
+## HALL OF SHAME 👎 :
+
+// Includes Clones who are working against the MIT Licence and Distributing Malware. All Flaws are mentioned. 😑
+
+---
+
 ## Note from Developer :
 
 Appreciate my effort? Why not leave a Star ⭐ ! Also if forked, please credit me for my effort and thanks if you do! :)
