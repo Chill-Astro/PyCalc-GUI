@@ -3,8 +3,10 @@
 </p>
 <h1 align="center">PyCalc GUI v1.2</h1>
 
-PyCalc - GUI is an Open-Source, Cross-Platform and a Advanced GUI Version of [PyCalc-SE](https://github.com/Chill-Astro/PyCalc-SE) consisting of Math Functions from [PyCalc](https://github.com/Chill-Astro/PyCalc)!
- 
+PyCalc - GUI is an Open-Source, Cross-Platform and "Lite" ( But Slower ) Version of [Lamina ✦](https://github.com/Chill-Astro/Lamina) for Windows, Linux and MacOS consisting of Math Functions from [PyCalc](https://github.com/Chill-Astro/PyCalc) in a similar GUI experience from Lamina ✦.
+
+---
+
 ## Key Features :
 
 - Extemely Lightweight [Simple GUI App]. ✅
