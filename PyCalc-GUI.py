@@ -24,7 +24,7 @@ class Calculator(QWidget):
         layout = QVBoxLayout(widget)
         layout.setSpacing(16)
         layout.setContentsMargins(32, 32, 32, 32)
-        layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        layout.setAlignment(Qt.Top | Qt.AlignHCenter)
         # App icon
         icon_label = QLabel()
         icon_path = resource_path("PyCalc-GUI.ico")
