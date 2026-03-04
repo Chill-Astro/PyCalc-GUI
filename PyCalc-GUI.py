@@ -85,7 +85,7 @@ class Calculator(QWidget):
         self._theme_timer = QTimer(self)
         self._theme_timer.setTimerType(Qt.CoarseTimer)  # Use enum for less CPU
         self._theme_timer.timeout.connect(self._check_theme_change)
-        self._theme_timer.start(250)  # check every 0.25 seconds
+        self._theme_timer.start(1000)  # check every 1s
 
     def closeEvent(self, event):
         # Save window geometry
