@@ -7,7 +7,6 @@ import requests
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QLineEdit, QSizePolicy, QStackedWidget, QFrame, QStyle)
 from PySide6.QtGui import QIcon, QFont, QFontDatabase
 from PySide6.QtCore import Qt, QSettings, QSize
-from PySide6.QtGui import QIcon, QFontDatabase, QFont
 
 # Helper for bundled resources (PyInstaller)
 def resource_path(relative_path):
@@ -24,7 +23,7 @@ class Calculator(QWidget):
         layout = QVBoxLayout(widget)
         layout.setSpacing(16)
         layout.setContentsMargins(32, 32, 32, 32)
-        layout.setAlignment(Qt.Top | Qt.AlignHCenter)
+        layout.setAlignment(Qt.AlignCenter)
         # App icon
         icon_label = QLabel()
         icon_path = resource_path("PyCalc-GUI.ico")
@@ -33,20 +32,20 @@ class Calculator(QWidget):
         icon_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(icon_label, alignment=Qt.AlignCenter)
         # App name
-        name_label = QLabel("<b>PyCalc - GUI</b>")
+        name_label = QLabel(f"<b>PyCalc - GUI v{self.CURRENT_VERSION}</b>")
         name_label.setAlignment(Qt.AlignCenter)
         name_label.setStyleSheet("font-size: 22px; margin-top: 8px;")
-        layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        layout.addWidget(name_label, alignment=Qt.AlignCenter)\
+        # Quote
+        version_label = QLabel("<i>\"Lamina</i>" + " ✦ " + "<i>for every System!\"</i>")
+        version_label.setAlignment(Qt.AlignCenter)
+        version_label.setStyleSheet("font-size: 15px; color: #888;")
+        layout.addWidget(version_label, alignment=Qt.AlignCenter)
         # Author
         author_label = QLabel("Developer : Chill-Astro Software")
         author_label.setAlignment(Qt.AlignCenter)
         author_label.setStyleSheet("font-size: 15px; color: #888;")
         layout.addWidget(author_label, alignment=Qt.AlignCenter)
-        # Version
-        version_label = QLabel(f"Version : {self.CURRENT_VERSION}")
-        version_label.setAlignment(Qt.AlignCenter)
-        version_label.setStyleSheet("font-size: 15px; color: #888;")
-        layout.addWidget(version_label, alignment=Qt.AlignCenter)
         # Check for updates button
         update_btn = QPushButton("Check for updates")
         update_btn.setFixedHeight(36)
@@ -60,8 +59,8 @@ class Calculator(QWidget):
         self.about_update_status.setAlignment(Qt.AlignCenter)
         self.about_update_status.setStyleSheet("font-size: 15px; margin-top: 8px;")
         layout.addWidget(self.about_update_status, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
         return widget
+    
     def __init__(self):
         super().__init__()
         self.CURRENT_VERSION = "1.3" # About Section + Bug Fixes
@@ -261,8 +260,7 @@ class Calculator(QWidget):
             QPushButton[eq="true"]:pressed { background: #4c669f; }
         """
 
-    def light_stylesheet(self):
-        # Modern light theme: structure matches dark theme, but with much lighter blues for all blue elements
+    def light_stylesheet(self):        
         return """
             QWidget { background: #f7fafd; }
             QLabel { color: #23272e; }
@@ -320,18 +318,14 @@ class Calculator(QWidget):
                 '\ue901',  # Heron's Formula
                 '\ue902',  # Simple Interest
                 '\ue903',  # Compound Interest
-                '\ue919',  # Quadratic Equation
-                '\ue904',  # Factorial
+                '\ue919',  # Quadratic Equation                
                 '\ue915',  # Discount Price
-                '≈',       # Approximation
-                '\ue911',  # Prime Checker
-                '\ue914',  # Right Triangle
-                None,       # About (standard info icon)
+                '🛈', # About 
             ]
         else:
             icomoon_font = None
             icon_codes = [
-                'C', '△', 'SI', 'CI', 'QE', 'x!', '%', '≈', 'P', 'R', None
+                'C', '△', 'SI', 'CI', 'QE', '%', '🛈'
             ]
         sidebar_btn_data = [
             ("Calculator", icon_codes[0]),
@@ -339,15 +333,11 @@ class Calculator(QWidget):
             ("Simple Interest", icon_codes[2]),
             ("Compound Interest", icon_codes[3]),
             ("Quadratic Equation", icon_codes[4]),
-            ("Factorial", icon_codes[5]),
-            ("Discount Price", icon_codes[6]),
-            ("Approximation", icon_codes[7]),
-            ("Prime No. Checker", icon_codes[8]),
-            ("Right Triangle Checker", icon_codes[9]),
-            ("About", icon_codes[10]),
+            ("Discount Price", icon_codes[5]),            
+            ("About", icon_codes[6]),
         ]
         for idx, (tooltip, icon_text) in enumerate(sidebar_btn_data):
-            if idx == 10:
+            if idx == 7:
                 # About/info button uses Unicode ⓘ
                 btn = QPushButton('🛈')
                 btn.setToolTip(tooltip)
@@ -379,11 +369,7 @@ class Calculator(QWidget):
         self.stack.addWidget(self.initSimpleInterestUI())
         self.stack.addWidget(self.initCompoundInterestUI())
         self.stack.addWidget(self.initQuadraticUI())
-        self.stack.addWidget(self.initFactorialUI())
         self.stack.addWidget(self.initDiscountUI())
-        self.stack.addWidget(self.initApproximationUI())
-        self.stack.addWidget(self.initPrimeCheckerUI())
-        self.stack.addWidget(self.initRightTriangleUI())
         self.stack.addWidget(self.initAboutUI(use_icomoon, icomoon_font))
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
@@ -440,190 +426,6 @@ class Calculator(QWidget):
                 return "background: #2563eb; color: #fff; border-radius: 5px; font-size: 18px; font-weight: bold;"
             else:
                 return "background: #e0e7ef; color: #4b5563; border-radius: 5px; font-size: 18px;"
-
-    def initSpecialToolsUI(self, use_icomoon, icomoon_font):
-        widget = QWidget()
-        widget.setMinimumWidth(340)
-        widget.setMinimumHeight(420)
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setAlignment(Qt.AlignCenter)
-        # Top toggle buttons
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(8)
-        # Icons for toggles
-        if use_icomoon:
-            approx_icon = '\ue911'
-            prime_icon = '2'
-            right_icon = '\ue914'
-        else:
-            approx_icon = '≈'
-            prime_icon = '2'
-            right_icon = '∆'
-        self.special_btns = []
-        for idx, (name, icon) in enumerate([
-            ("Approximation", approx_icon),
-            ("Prime Checker", prime_icon),
-            ("Right Triangle", right_icon),
-        ]):
-            btn = QPushButton(icon)
-            btn.setToolTip(name)
-            btn.setFixedHeight(32)
-            btn.setFixedWidth(32)
-            btn.setStyleSheet("font-size: 10px; font-weight: bold;")
-            if use_icomoon and ord(icon[0]) >= 0xE000 and ord(icon[0]) <= 0xF8FF:
-                btn.setFont(icomoon_font)
-            btn.clicked.connect(lambda _, i=idx: self.switch_special_tool(i))
-            btn_layout.addWidget(btn)
-            self.special_btns.append(btn)
-        layout.addLayout(btn_layout)
-        # Stacked widget for the three tools
-        self.special_stack = QStackedWidget()
-        self.special_stack.addWidget(self.initApproximationUI())
-        self.special_stack.addWidget(self.initPrimeCheckerUI())
-        self.special_stack.addWidget(self.initRightTriangleUI())
-        layout.addWidget(self.special_stack)
-        widget.setLayout(layout)
-        self.switch_special_tool(0)
-        return widget
-
-    def switch_special_tool(self, idx):
-        self.special_stack.setCurrentIndex(idx)
-        for i, btn in enumerate(self.special_btns):
-            if i == idx:
-                btn.setStyleSheet("background: #5e81ac; color: #fff; border-radius: 5px; font-size: 14px; font-weight: bold;")
-            else:
-                btn.setStyleSheet("background: none; color: #bfc7d5; border-radius: 5px; font-size: 14px; font-weight: bold;")
-
-    def initApproximationUI(self):
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setAlignment(Qt.AlignCenter)
-        self.approx_input = QLineEdit()
-        lbl = QLabel("<b>Enter the Number [n] :</b>")
-        lbl.setAlignment(Qt.AlignCenter)
-        lbl.setStyleSheet("font-size: 16px;")
-        layout.addWidget(lbl, alignment=Qt.AlignCenter)
-        self.approx_input.setPlaceholderText("")
-        self.approx_input.setFixedWidth(180)
-        self.approx_input.setFixedHeight(32)
-        self.approx_input.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.approx_input, alignment=Qt.AlignCenter)
-        btn = QPushButton("Calculate")
-        btn.setFixedHeight(36)
-        btn.setFixedWidth(120)
-        btn.setProperty('eq', True)
-        btn.setStyleSheet("font-size: 15px;")
-        btn.clicked.connect(self.calculate_approximation)
-        layout.addWidget(btn, alignment=Qt.AlignCenter)
-        self.approx_output = QLabel("OUTPUT AREA")
-        self.approx_output.setAlignment(Qt.AlignCenter)
-        self.approx_output.setFixedHeight(28)
-        self.approx_output.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.approx_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
-        return widget
-
-    def initPrimeCheckerUI(self):
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setAlignment(Qt.AlignCenter)
-        self.prime_input = QLineEdit()
-        lbl = QLabel("<b>Enter a Number [n] :</b>")
-        lbl.setAlignment(Qt.AlignCenter)
-        lbl.setStyleSheet("font-size: 16px;")
-        layout.addWidget(lbl, alignment=Qt.AlignCenter)
-        self.prime_input.setPlaceholderText("")
-        self.prime_input.setFixedWidth(180)
-        self.prime_input.setFixedHeight(32)
-        self.prime_input.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.prime_input, alignment=Qt.AlignCenter)
-        btn = QPushButton("Check Prime")
-        btn.setFixedHeight(36)
-        btn.setFixedWidth(120)
-        btn.setProperty('eq', True)
-        btn.setStyleSheet("font-size: 15px;")
-        btn.clicked.connect(self.calculate_prime)
-        layout.addWidget(btn, alignment=Qt.AlignCenter)
-        self.prime_output = QLabel("OUTPUT AREA")
-        self.prime_output.setAlignment(Qt.AlignCenter)
-        self.prime_output.setFixedHeight(28)
-        self.prime_output.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.prime_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
-        return widget
-
-    def initRightTriangleUI(self):
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setAlignment(Qt.AlignCenter)
-        self.rt_inputs = [QLineEdit() for _ in range(3)]
-        labels = ["Enter 1st Side [a] :", "Enter 2nd Side [b] :", "Enter 3rd Side [c]:"]
-        for i, label in enumerate(labels):
-            lbl = QLabel(f"<b>{label}</b>")
-            lbl.setAlignment(Qt.AlignCenter)
-            lbl.setStyleSheet("font-size: 16px;")
-            layout.addWidget(lbl, alignment=Qt.AlignCenter)
-            self.rt_inputs[i].setPlaceholderText("")
-            self.rt_inputs[i].setFixedWidth(180)
-            self.rt_inputs[i].setFixedHeight(32)
-            self.rt_inputs[i].setStyleSheet("font-size: 15px;")
-            layout.addWidget(self.rt_inputs[i], alignment=Qt.AlignCenter)
-        btn = QPushButton("Check")
-        btn.setFixedHeight(36)
-        btn.setFixedWidth(120)
-        btn.setProperty('eq', True)
-        btn.setStyleSheet("font-size: 15px;")
-        btn.clicked.connect(self.calculate_right_triangle)
-        layout.addWidget(btn, alignment=Qt.AlignCenter)
-        self.rt_output = QLabel("OUTPUT AREA")
-        self.rt_output.setAlignment(Qt.AlignCenter)
-        self.rt_output.setFixedHeight(28)
-        self.rt_output.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.rt_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
-        return widget
-
-    def calculate_approximation(self):
-        try:
-            n = float(self.approx_input.text())
-            self.approx_output.setText(f"Rounded: {round(n)}")
-        except Exception:
-            self.approx_output.setText("Invalid input.")
-
-    def calculate_prime(self):
-        try:
-            n = int(self.prime_input.text())
-            if n < 2:
-                self.prime_output.setText("Not Prime")
-                return
-            for i in range(2, int(n ** 0.5) + 1):
-                if n % i == 0:
-                    self.prime_output.setText("Not Prime")
-                    return
-            self.prime_output.setText("Prime")
-        except Exception:
-            self.prime_output.setText("Invalid input.")
-
-    def calculate_right_triangle(self):
-        try:
-            a = float(self.rt_inputs[0].text())
-            b = float(self.rt_inputs[1].text())
-            c = float(self.rt_inputs[2].text())
-            sides = sorted([a, b, c])
-            if abs(sides[0]**2 + sides[1]**2 - sides[2]**2) < 1e-6:
-                self.rt_output.setText("Right Triangle")
-            else:
-                self.rt_output.setText("Not Right Triangle")
-        except Exception:
-            self.rt_output.setText("Invalid input.")
 
     def initCalculatorUI(self):
         widget = QWidget()
@@ -738,7 +540,6 @@ class Calculator(QWidget):
         self.si_output.setFixedHeight(28)
         self.si_output.setStyleSheet("font-size: 15px;")
         layout.addWidget(self.si_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
         return widget
 
     def initCompoundInterestUI(self):
@@ -772,8 +573,7 @@ class Calculator(QWidget):
         self.ci_output.setAlignment(Qt.AlignCenter)
         self.ci_output.setFixedHeight(28)
         self.ci_output.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.ci_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
+        layout.addWidget(self.ci_output, alignment=Qt.AlignCenter)        
         return widget
 
     def initQuadraticUI(self):
@@ -808,40 +608,6 @@ class Calculator(QWidget):
         self.q_output.setFixedHeight(28)
         self.q_output.setStyleSheet("font-size: 15px;")
         layout.addWidget(self.q_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
-        return widget
-
-    def initFactorialUI(self):
-        widget = QWidget()
-        widget.setMinimumWidth(340)
-        widget.setMinimumHeight(260)
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setAlignment(Qt.AlignCenter)
-        self.fact_input = QLineEdit()
-        lbl = QLabel("<b>Enter Number :</b>")
-        lbl.setAlignment(Qt.AlignCenter)
-        lbl.setStyleSheet("font-size: 16px;")
-        layout.addWidget(lbl, alignment=Qt.AlignCenter)
-        self.fact_input.setPlaceholderText("")
-        self.fact_input.setFixedWidth(180)
-        self.fact_input.setFixedHeight(32)
-        self.fact_input.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.fact_input, alignment=Qt.AlignCenter)
-        btn = QPushButton("Calculate")
-        btn.setFixedHeight(36)
-        btn.setFixedWidth(120)
-        btn.setProperty('eq', True)
-        btn.setStyleSheet("font-size: 15px;")
-        btn.clicked.connect(self.calculate_factorial)
-        layout.addWidget(btn, alignment=Qt.AlignCenter)
-        self.fact_output = QLabel("OUTPUT AREA")
-        self.fact_output.setAlignment(Qt.AlignCenter)
-        self.fact_output.setFixedHeight(28)
-        self.fact_output.setStyleSheet("font-size: 15px;")
-        layout.addWidget(self.fact_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
         return widget
 
     def initDiscountUI(self):
@@ -873,13 +639,11 @@ class Calculator(QWidget):
         layout.addWidget(btn, alignment=Qt.AlignCenter)
         self.discount_output = QLabel("DISCOUNT OUTPUT\nFINAL PRICE")
         self.discount_output.setAlignment(Qt.AlignCenter)
-        self.discount_output.setFixedHeight(28)
+        self.discount_output.setFixedHeight(35)
         self.discount_output.setStyleSheet("font-size: 15px;")
         layout.addWidget(self.discount_output, alignment=Qt.AlignCenter)
-        layout.addStretch(1)
         return widget
 
-    # Calculation logic for each calculator (to be implemented)
     def calculate_heron(self):
         try:
             a = float(self.heron_inputs[0].text())
@@ -930,16 +694,6 @@ class Calculator(QWidget):
                 self.q_output.setText(f"Roots: {x1:.4f}, {x2:.4f}")
         except Exception:
             self.q_output.setText("Invalid input.")
-
-    def calculate_factorial(self):
-        try:
-            n = int(self.fact_input.text())
-            if n < 0:
-                self.fact_output.setText("Invalid input.")
-            else:
-                self.fact_output.setText(f"{n}! = {math.factorial(n)}")
-        except Exception:
-            self.fact_output.setText("Invalid input.")
 
     def calculate_discount(self):
         try:
@@ -1264,37 +1018,6 @@ class Calculator(QWidget):
             self.on_button('CE')
         else:
             super().keyPressEvent(event)
-
-    def check_for_updates(self):
-        from PySide6.QtCore import QThread, Signal
-
-        class UpdateCheckThread(QThread):
-            update_message = Signal(str)
-
-            def __init__(self, parent=None):
-                super().__init__(parent)
-                self.parent = parent
-
-            def run(self):
-                try:
-                    response = requests.get(UPDATE_VERSION_URL, timeout=5)
-                    response.raise_for_status()
-                    latest_version = response.text.strip()
-                    if latest_version > self.parent.CURRENT_VERSION:
-                        msg = f"🎉 PyCalc-GUI v{latest_version} is OUT NOW!"
-                    elif latest_version == self.parent.CURRENT_VERSION:
-                        msg = "🎉 PyCalc-GUI is up to date!"
-                    elif latest_version < self.parent.CURRENT_VERSION:
-                        msg = "⚠️ This is a Dev. Build of PyCalc-GUI!"
-                    else:
-                        msg = "🎉 PyCalc-GUI is up to date!"
-                except Exception:
-                    msg = "⚠️ Error : Check your Internet Connection."
-                self.update_message.emit(msg)
-
-        self.update_thread = UpdateCheckThread(self)
-        self.update_thread.update_message.connect(self.show_update_message)
-        self.update_thread.start()
 
     def show_update_message(self, msg):
         from PySide6.QtCore import QTimer
