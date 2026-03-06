@@ -72,7 +72,7 @@ class Calculator(QWidget):
             self.setWindowIcon(QIcon(icon_path))
         # ...existing code...
         # Restore window geometry
-        self.settings = QSettings("ChillAstro", "PyCalc-GUI")
+        self.settings = QSettings("Chill-Astro", "PyCalc-GUI")
         geometry = self.settings.value("geometry")
         if geometry:
             self.restoreGeometry(geometry)
