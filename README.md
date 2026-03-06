@@ -1,15 +1,26 @@
-<p align="center">
-  <img src="https://github.com/Chill-Astro/PyCalc-GUI/blob/main/PyCalc-GUI.ico" width="128px" height="128px" alt="PyCalc Logo">
-</p>
-<h1 align="center">PyCalc GUI v1.2</h1>
+<div align="center">
+  <img src="https://github.com/Chill-Astro/PyCalc/blob/main/PyC_GUI.ico" width="128px" height="128px" alt="PyCalc Logo">
+  <h1 align="center">PyCalc</h1>  
+  <i>"Lamina ✦ for Every System!"</i>
+  <br><br>
+  
+  PyCalc is an Open-Source, Cross-Platform and "Lite" ( But Slower ) Version of [Lamina ✦](https://github.com/Chill-Astro/Lamina) for Windows, Linux and MacOS.
 
-PyCalc - GUI is an Open-Source, Cross-Platform and "Lite" ( But Slower ) Version of [Lamina ✦](https://github.com/Chill-Astro/Lamina) for Windows, Linux and MacOS consisting of Math Functions from [PyCalc](https://github.com/Chill-Astro/PyCalc) in a similar GUI experience from Lamina ✦.
+  Latest Version : `v3.14.1.3` ( To be Released )
+  
+  Target OS : `Windows Linux & MacOS`
+
+  ( To be ) Available on : `Flathub, Snap Store and Winget`
+
+  Will try my best to make MacOS Versions!
+  
+</div>
 
 ---
 
 ## Key Features :
 
-- Extemely Lightweight [Simple GUI App]. ✅
+- Extemely Lightweight ( Simple GUI App ). ✅
 - Simple and Clean GUI. ✅
 - Fast and Error-Proof Calculations. ✅
 - High Precision for decimals. ✅
@@ -18,9 +29,9 @@ PyCalc - GUI is an Open-Source, Cross-Platform and "Lite" ( But Slower ) Version
 
 ---
 
-## Installing PyCalc-GUI from Winget :
+## Installing PyCalc from Winget :
 
-    winget install PyCalc-GUI
+    winget install PyCalc
 
 ---
 
