@@ -14,7 +14,7 @@ class DiscountWidget(QWidget):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setAlignment(Qt.AlignCenter)
         self.discount_inputs = [QLineEdit() for _ in range(2)]
-        labels = ["Enter Original Price :", "Enter Discount [%] :"]
+        labels = ["Enter Original Price :", "Enter Discount (%) :"]
         for i, label in enumerate(labels):
             lbl = QLabel(f"<b>{label}</b>")
             lbl.setAlignment(Qt.AlignCenter)
@@ -32,7 +32,7 @@ class DiscountWidget(QWidget):
         btn.setStyleSheet("font-size: 15px;")
         btn.clicked.connect(self.calculate_discount)
         layout.addWidget(btn, alignment=Qt.AlignCenter)
-        self.discount_output = QLabel(r"DISCOUNT OUTPUT\nFINAL PRICE")
+        self.discount_output = QLabel(r"DISCOUNT OUTPUT" + "\n" + r"FINAL PRICE")
         self.discount_output.setAlignment(Qt.AlignCenter)
         self.discount_output.setFixedHeight(35)
         self.discount_output.setStyleSheet("font-size: 15px;")

@@ -14,8 +14,12 @@ class QuadraticWidget(QWidget):
         layout.setSpacing(12)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> x = [-b ± √(b²-4ac)] / 2a")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(formula_label, alignment=Qt.AlignCenter)
         self.q_inputs = [QLineEdit() for _ in range(3)]
-        labels = ["First Coeffecient [a] :", "Second Coeffecient [b] :", "Third Coeffecient [c] :"]
+        labels = ["First Coeffecient (a) :", "Second Coeffecient (b) :", "Third Coeffecient (c) :"]
         for i, label in enumerate(labels):
             lbl = QLabel(f"<b>{label}</b>")
             lbl.setAlignment(Qt.AlignCenter)

@@ -13,8 +13,12 @@ class SimpleInterestWidget(QWidget):
         layout.setSpacing(12)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> SI = (P * R * T) / 100")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(formula_label, alignment=Qt.AlignCenter)
         self.si_inputs = [QLineEdit() for _ in range(3)]
-        labels = ["Principal:", "Rate [%]:", "Time [Years]:"]
+        labels = ["Principal (P):", "Rate (R%):", "Time (T in Years):"]
         for i, label in enumerate(labels):
             lbl = QLabel(f"<b>{label}</b>")
             lbl.setAlignment(Qt.AlignCenter)

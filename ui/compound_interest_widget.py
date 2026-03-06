@@ -13,8 +13,12 @@ class CompoundInterestWidget(QWidget):
         layout.setSpacing(12)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> A = P(1 + R/n)^(nt)")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(formula_label, alignment=Qt.AlignCenter)
         self.ci_inputs = [QLineEdit() for _ in range(4)]
-        labels = ["Principal :", "Rate [%] :", "Time [Years]:", "Compounding Frequency [n] :"]
+        labels = ["Principal (P) :", "Rate (R%) :", "Time (t in Years):", "Compounding Frequency (n) :"]
         for i, label in enumerate(labels):
             lbl = QLabel(f"<b>{label}</b>")
             lbl.setAlignment(Qt.AlignCenter)

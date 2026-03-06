@@ -14,8 +14,12 @@ class HeronWidget(QWidget):
         inner.setSpacing(12)
         inner.setContentsMargins(24, 24, 24, 24)
         inner.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> Area = √s(s-a)(s-b)(s-c)")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        inner.addWidget(formula_label, alignment=Qt.AlignCenter)
         self.heron_inputs = [QLineEdit() for _ in range(3)]
-        labels = ["First Side [a] :", "Second Side [b] :", "Third Side [c] :"]
+        labels = ["First Side (a) :", "Second Side (b) :", "Third Side (c) :"]
         for i, label in enumerate(labels):
             lbl = QLabel(f"<b>{label}</b>")
             lbl.setAlignment(Qt.AlignCenter)
