@@ -2,4 +2,4 @@ build/
 dist/
 *.spec.*
 Output/
-PyCalc-GUI.spec
+PyC_GUI.spec

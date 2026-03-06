@@ -9,10 +9,10 @@ from utils import resource_path, detect_os_theme
 class Calculator(QWidget):
     def __init__(self):
         super().__init__()
-        self.CURRENT_VERSION = "1.3" # About Section + Bug Fixes
-        self.setWindowTitle("PyCalc - GUI")
+        self.CURRENT_VERSION = "3.14.1.3" # About Section + Bug Fixes + Performance Improvements
+        self.setWindowTitle("PyCalc GUI")
         self.setMinimumSize(430, 540)
-        icon_path = resource_path("PyCalc-GUI.ico")
+        icon_path = resource_path("PyC_GUI.ico")
         if icon_path and os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         self.settings = QSettings("Chill-Astro", "PyCalc-GUI")
@@ -181,6 +181,15 @@ class Calculator(QWidget):
 if __name__ == "__main__":
     import os
     app = QApplication(sys.argv)
+    
+    # Load and apply the Inter font
+    font_id = QFontDatabase.addApplicationFont(resource_path("Inter.ttf"))
+    if font_id != -1:
+        font_families = QFontDatabase.applicationFontFamilies(font_id)
+        if font_families:
+            inter_font = QFont(font_families[0])
+            app.setFont(inter_font)
+
     calc = Calculator()
     calc.show()
     sys.exit(app.exec())

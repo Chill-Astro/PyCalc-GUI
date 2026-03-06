@@ -1,13 +1,11 @@
 To export using Pyinstaller,
 
-pyinstaller -F -i PyCalc-GUI.ico --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyCalc-GUI.ico;." PyCalc-GUI.py --noconsole
+pyinstaller -F -i PyC_GUI.ico --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyC_GUI.ico;." PyC_GUI.py --noconsole
 
-[ If without icon ]
+If without icon,
 
-pyinstaller -F --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyCalc-GUI.ico;." PyCalc-GUI.py --noconsole
+pyinstaller -F --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyC_GUI.ico;." PyC_GUI.py --noconsole
 
 If Pyinstaller not available,
 
 pip install pyinstaller
-
-Other Pyinstaller Alternatives can also be used.

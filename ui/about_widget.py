@@ -18,14 +18,18 @@ class UpdateCheckThread(QThread):
             response = requests.get(UPDATE_VERSION_URL, timeout=5)
             response.raise_for_status()
             latest_version = response.text.strip()
-            if latest_version > self.current_version:
-                msg = f"🎉 PyCalc-GUI v{latest_version} is OUT NOW!"
-            elif latest_version == self.current_version:
-                msg = "🎉 PyCalc-GUI is up to date!"
-            elif latest_version < self.current_version:
-                msg = "⚠️ WARNING! THIS IS NOT A PUBLIC RELEASE!"
+
+            latest_version_parts = [int(part) for part in latest_version.split('.')]
+            current_version_parts = [int(part) for part in self.current_version.split('.')]
+
+            if latest_version_parts > current_version_parts:
+                msg = f"🎉 PyCalc GUI v{latest_version} is OUT NOW!"
+            elif latest_version_parts == current_version_parts:
+                msg = "🎉 PyCalc GUI is up to date!"
+            elif latest_version_parts < current_version_parts:
+                msg = "⚠️ THIS IS NOT A PUBLIC RELEASE!"
             else:
-                msg = "🎉 PyCalc-GUI is up to date!"
+                msg = "🎉 PyCalc GUI is up to date!"
         except Exception:
             msg = "⚠️ Please check your Internet Connection."
         self.update_message.emit(msg)
@@ -43,7 +47,7 @@ class AboutWidget(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         # App icon
         icon_label = QLabel()
-        icon_path = resource_path("PyCalc-GUI.ico")
+        icon_path = resource_path("PyC_GUI.ico")
         if os.path.exists(icon_path):
             icon_label.setPixmap(QIcon(icon_path).pixmap(128, 128))
         icon_label.setAlignment(Qt.AlignCenter)
