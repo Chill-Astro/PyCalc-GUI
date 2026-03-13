@@ -2,4 +2,4 @@ build/
 dist/
 *.spec.*
 Output/
-PyC_GUI.spec
+PyC.spec
