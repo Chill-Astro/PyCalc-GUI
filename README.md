@@ -4,15 +4,13 @@
   <i>"Lamina ✦ for Every System!"</i>
   <br><br>
   
-  PyCalc is an Open-Source, Cross-Platform and "Lite" ( But Slower ) Version of [Lamina ✦](https://github.com/Chill-Astro/Lamina) for Windows, Linux and MacOS.
+  PyCalc is an Open-Source, Cross-Platform and "Lite" ( But Slower ) Version of [Lamina ✦](https://github.com/Chill-Astro/Lamina) for Windows & Linux.
 
   Latest Version : `v3.14.1.3` ( To be Released )
   
-  Target OS : `Windows Linux & MacOS`
+  Target OS : `Windows & Linux`
 
   ( To be ) Available on : `Flathub, Snap Store and Winget`
-
-  Will try my best to make MacOS Versions!
   
 </div>
 
