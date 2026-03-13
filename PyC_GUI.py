@@ -1,10 +1,671 @@
 #!/usr/bin/env python3
 import sys
-import importlib
-from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QFrame, QSizePolicy)
+import math
+import os
+import requests
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QFrame, QSizePolicy, QLabel, QLineEdit, QGridLayout)
 from PySide6.QtGui import QIcon, QFont, QFontDatabase
-from PySide6.QtCore import Qt, QSettings, QTimer
+from PySide6.QtCore import Qt, QSettings, QTimer, QThread, Signal
 from utils import resource_path, detect_os_theme
+
+UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/cc42d26ad09a37c594401d82fcbb8d2fa97f67ef/PyC_GUI_V.txt"  # Gist URL
+
+class UpdateCheckThread(QThread):
+    update_message = Signal(str)
+    def __init__(self, parent=None, current_version=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.current_version = current_version
+    def run(self):
+        try:
+            response = requests.get(UPDATE_VERSION_URL, timeout=5)
+            response.raise_for_status()
+            latest_version = response.text.strip()
+
+            latest_version_parts = [int(part) for part in latest_version.split('.')]
+            current_version_parts = [int(part) for part in self.current_version.split('.')]
+
+            if latest_version_parts > current_version_parts:
+                msg = f"🎉 PyCalc GUI v{latest_version} is OUT NOW!"
+            elif latest_version_parts == current_version_parts:
+                msg = "🎉 PyCalc GUI is up to date!"
+            elif latest_version_parts < current_version_parts:
+                msg = "⚠️ THIS IS NOT A PUBLIC RELEASE!"
+            else:
+                msg = "🎉 PyCalc GUI is up to date!"
+        except Exception:
+            msg = "⚠️ Please check your Internet Connection."
+        self.update_message.emit(msg)
+
+class AboutWidget(QWidget):
+    def __init__(self, current_version):
+        super().__init__()
+        self.CURRENT_VERSION = current_version
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+        layout.setContentsMargins(32, 32, 32, 32)
+        layout.setAlignment(Qt.AlignCenter)
+        # App icon
+        icon_label = QLabel()
+        icon_path = resource_path("PyC_GUI.ico")
+        if os.path.exists(icon_path):
+            icon_label.setPixmap(QIcon(icon_path).pixmap(128, 128))
+        icon_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(icon_label, alignment=Qt.AlignCenter)
+        # App name
+        name_label = QLabel(f"<b>PyCalc - GUI v{self.CURRENT_VERSION}</b>")
+        name_label.setAlignment(Qt.AlignCenter)
+        name_label.setStyleSheet("font-size: 22px; margin-top: 8px;")
+        layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        # Quote
+        version_label = QLabel("<i>\"Lamina</i>" + " ✦ " + "<i>for every System!\"</i>")
+        version_label.setAlignment(Qt.AlignCenter)
+        version_label.setStyleSheet("font-size: 15px; color: #888;")
+        layout.addWidget(version_label, alignment=Qt.AlignCenter)
+        # Author
+        author_label = QLabel("Developer : Chill-Astro Software")
+        author_label.setAlignment(Qt.AlignCenter)
+        author_label.setStyleSheet("font-size: 15px; color: #888;")
+        layout.addWidget(author_label, alignment=Qt.AlignCenter)
+        # Check for updates button
+        update_btn = QPushButton("Check for updates")
+        update_btn.setFixedHeight(36)
+        update_btn.setFixedWidth(180)
+        update_btn.setProperty('eq', True)
+        update_btn.setStyleSheet("font-size: 15px;")
+        update_btn.clicked.connect(self.check_for_updates_about)
+        layout.addWidget(update_btn, alignment=Qt.AlignCenter)
+        # Update status (now below the button)
+        self.about_update_status = QLabel("")
+        self.about_update_status.setAlignment(Qt.AlignCenter)
+        self.about_update_status.setStyleSheet("font-size: 15px; margin-top: 8px;")
+        layout.addWidget(self.about_update_status, alignment=Qt.AlignCenter)
+
+    def check_for_updates_about(self):
+        self.update_thread = UpdateCheckThread(self, self.CURRENT_VERSION)
+        self.update_thread.update_message.connect(self.show_about_update_message)
+        self.update_thread.start()
+
+    def show_about_update_message(self, msg):
+        self.about_update_status.setText(msg)
+        self.about_update_status.setStyleSheet("font-size: 15px; margin-top: 8px;")
+
+class CalculatorWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        self.reset()
+
+    def initUI(self):
+        vbox = QVBoxLayout(self)
+        vbox.setSpacing(10)
+        vbox.setContentsMargins(8, 8, 8, 8)
+        self.history = QLabel("")
+        self.history.setObjectName("history")
+        self.history.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.history.setStyleSheet("font-size: 12px; padding-top: 20px;")
+        vbox.addWidget(self.history)
+        self.display = QLabel("0")
+        self.display.setObjectName("display")
+        self.display.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.display.setMinimumHeight(75)
+        self.display.setStyleSheet("font-size: 30px; font-weight: bold; padding-right: 0.5px;")
+        vbox.addWidget(self.display)
+        grid = QGridLayout()
+        grid.setSpacing(6)
+        vbox.addLayout(grid)
+        buttons = [
+            [('xʸ', 'fn'), ('CE', 'fn'), ('C', 'fn'), ('⌫', 'fn')],
+            [('x²', 'fn'), ('∛x', 'fn'), ('√x', 'fn'), ('÷', 'op')],
+            [('7', ''), ('8', ''), ('9', ''), ('×', 'op')],
+            [('4', ''), ('5', ''), ('6', ''), ('-', 'op')],
+            [('1', ''), ('2', ''), ('3', ''), ('+', 'op')],
+            [('+/-', 'fn'), ('0', ''), ('.', ''), ('=', 'eq')],
+        ]
+        self.button_map = {}
+        for i, row in enumerate(buttons):
+            for j, (text, role) in enumerate(row):
+                btn = QPushButton(text)
+                btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                if role == 'op':
+                    btn.setProperty('op', True)
+                elif role == 'eq':
+                    btn.setProperty('eq', True)
+                elif role == 'fn':
+                    btn.setProperty('fn', True)
+                btn.clicked.connect(lambda _, t=text: self.on_button(t))
+                grid.addWidget(btn, i, j)
+                self.button_map[text] = btn
+
+    def reset(self):
+        self.expression_history = ""
+        self.current_input = "0"
+        self.full_expression = ""
+        self.result_pending = False
+        self._currentNumber = 0.0
+        self._previousNumber = 0.0
+        self._currentOperator = ""
+        self._isNewNumberInput = True
+        self._hasDecimal = False
+        self.update_display()
+
+    def update_display(self):
+        if isinstance(self._currentNumber, float):
+            if self._currentNumber.is_integer() and not self._hasDecimal:
+                display_value = str(int(self._currentNumber))
+            else:
+                display_value = str(self._currentNumber)
+        else:
+            display_value = str(self._currentNumber)
+        self.display.setText(display_value)
+        self.history.setText(self.expression_history)
+
+    def clear_entry(self):
+        self.current_input = "0"
+        self._currentNumber = 0.0
+        self._isNewNumberInput = True
+        self._hasDecimal = False
+        self.update_display()
+
+    def backspace(self):
+        if self.result_pending:
+            return
+        current_str = str(self._currentNumber)
+        if '.' in current_str:
+            parts = current_str.split('.')
+            if len(parts[0]) > 1:
+                new_str = parts[0][:-1] + ('.' + parts[1] if parts[1] else '')
+            else:
+                new_str = '0' + ('.' + parts[1] if parts[1] else '')
+            try:
+                self._currentNumber = float(new_str)
+                self._hasDecimal = '.' in new_str
+            except ValueError:
+                self._currentNumber = 0.0
+                self._hasDecimal = False
+        else:
+            if len(current_str) > 1:
+                self._currentNumber = int(current_str[:-1])
+            else:
+                self._currentNumber = 0.0
+            self._hasDecimal = False
+        self._isNewNumberInput = False
+        self.update_display()
+
+    def input_digit(self, digit):
+        if self.result_pending:
+            self._currentNumber = int(digit)
+            self.expression_history = ""
+            self.full_expression = ""
+            self.result_pending = False
+            self._isNewNumberInput = False
+            self._hasDecimal = False
+        elif self._isNewNumberInput or self._currentNumber == 0:
+            if self._hasDecimal:
+                self._currentNumber = float(f"0.{digit}")
+            else:
+                self._currentNumber = int(digit)
+            self._isNewNumberInput = False
+        else:
+            current_str = str(self._currentNumber)
+            if self._hasDecimal:
+                if '.' in current_str:
+                    self._currentNumber = float(current_str + digit)
+                else:
+                    self._currentNumber = float(current_str + '.' + digit)
+            else:
+                self._currentNumber = float(current_str + digit) if '.' in current_str else int(current_str + digit)
+        self.update_display()
+
+    def input_decimal(self):
+        if self.result_pending:
+            self._currentNumber = 0.0
+            self.expression_history = ""
+            self.full_expression = ""
+            self.result_pending = False
+            self._isNewNumberInput = False
+            self._hasDecimal = True
+        if not self._hasDecimal:
+            self._hasDecimal = True
+            current_str = str(self._currentNumber)
+            if '.' not in current_str:
+                self._currentNumber = float(current_str + '.')
+            self._isNewNumberInput = False
+            self.update_display()
+
+    def input_operator(self, op):
+        if not self._currentNumber and op != '-':
+            return
+        if not self._isNewNumberInput:
+            if self._currentOperator:
+                self.calculate_intermediate_result()
+            else:
+                self._previousNumber = self._currentNumber
+        visual_op = op.replace('**', '^').replace('*', '×').replace('/', '÷')
+        self.expression_history = f"{self._previousNumber} {visual_op} "
+        self._currentOperator = op
+        self._isNewNumberInput = True
+        self._hasDecimal = False
+        self.update_display()
+
+    def calculate_intermediate_result(self):
+        if self._currentOperator:
+            try:
+                if self._currentOperator == '+':
+                    result = self._previousNumber + self._currentNumber
+                elif self._currentOperator == '-':
+                    result = self._previousNumber - self._currentNumber
+                elif self._currentOperator == '*':
+                    result = self._previousNumber * self._currentNumber
+                elif self._currentOperator == '/':
+                    if self._currentNumber == 0:
+                        self._currentNumber = "Error"
+                        self.expression_history = ""
+                        self._previousNumber = 0
+                        self._currentOperator = ""
+                        self._isNewNumberInput = True
+                        self.result_pending = False
+                        self._hasDecimal = False
+                        self.update_display()
+                        return
+                    result = self._previousNumber / self._currentNumber
+                if isinstance(result, float) and result.is_integer() and not self._hasDecimal:
+                    self._currentNumber = int(result)
+                else:
+                    self._currentNumber = result
+                self._previousNumber = self._currentNumber
+                self._isNewNumberInput = True
+                self._hasDecimal = False
+                self.update_display()
+            except Exception:
+                self.handle_calculation_error()
+
+    def calculate_result(self):
+        if self.result_pending or not self._currentOperator:
+            return
+        second_number = self._currentNumber
+        try:
+            if self._currentOperator == '+':
+                result = self._previousNumber + second_number
+            elif self._currentOperator == '-':
+                result = self._previousNumber - second_number
+            elif self._currentOperator == '*':
+                result = self._previousNumber * second_number
+            elif self._currentOperator == '/':
+                if second_number == 0:
+                    self._currentNumber = "Error"
+                    self.expression_history = ""
+                    self._previousNumber = 0
+                    self._currentOperator = ""
+                    self._isNewNumberInput = True
+                    self.result_pending = False
+                    self._hasDecimal = False
+                    self.update_display()
+                    return
+                result = self._previousNumber / self._currentNumber
+            elif self._currentOperator == '**':
+                result = self._previousNumber ** second_number
+            if isinstance(result, float) and result.is_integer() and not self._hasDecimal:
+                self._currentNumber = int(result)
+            else:
+                self._currentNumber = result
+            self.expression_history = f"{self._previousNumber} {self.get_visual_operator(self._currentOperator)} {second_number} ="
+            self.result_pending = True
+            self._isNewNumberInput = True
+            self._currentOperator = ""
+            self._previousNumber = self._currentNumber
+            self._hasDecimal = False
+            self.update_display()
+        except Exception:
+            self.handle_calculation_error()
+
+    def handle_calculation_error(self):
+        self._currentNumber = "Error"
+        self.expression_history = ""
+        self._previousNumber = 0
+        self._currentOperator = ""
+        self._isNewNumberInput = True
+        self.result_pending = False
+        self._hasDecimal = False
+        self.update_display()
+
+    def get_visual_operator(self, op):
+        return op.replace('**', '^').replace('*', '×').replace('/', '÷')
+
+    def toggle_sign(self):
+        try:
+            self._currentNumber = -float(self._currentNumber)
+            self.update_display()
+        except Exception:
+            self.handle_calculation_error()
+
+    def calculate_square_root(self):
+        try:
+            num = float(self._currentNumber)
+            if num < 0:
+                self._currentNumber = "Error"
+                self.expression_history = f"√({num})"
+            else:
+                result = math.sqrt(num)
+                if result.is_integer() and not self._hasDecimal:
+                    self._currentNumber = int(result)
+                else:
+                    self._currentNumber = result
+                self.expression_history = f"√({num})"
+            self.update_display()
+        except (ValueError, TypeError):
+            self.handle_calculation_error()
+
+    def calculate_cube_root(self):
+        try:
+            num = float(self._currentNumber)
+            if num < 0:
+                result = -(-num) ** (1/3)
+            else:
+                result = num ** (1/3)
+            if isinstance(result, float) and result.is_integer() and not self._hasDecimal:
+                self._currentNumber = int(result)
+            else:
+                self._currentNumber = result
+            self.expression_history = f"∛({num})"
+            self.update_display()
+        except Exception:
+            self.handle_calculation_error()
+
+    def calculate_square(self):
+        try:
+            num = float(self._currentNumber)
+            result = num ** 2
+            if result.is_integer() and not self._hasDecimal:
+                self._currentNumber = int(result)
+            else:
+                self._currentNumber = result
+            self.expression_history = f"sqr({num})"
+            self.update_display()
+        except (ValueError, TypeError):
+            self.handle_calculation_error()
+
+    def on_button(self, text):
+        if text in '0123456789':
+            self.input_digit(text)
+        elif text == '.':
+            self.input_decimal()
+        elif text in '+-×÷':
+            if text == '-' and self._isNewNumberInput:
+                if self._currentNumber == 0 and (not self._currentOperator or self.expression_history.endswith(('+', '-', '×', '÷', '^', '**'))):
+                    self._currentNumber = 0.0
+                    self._isNewNumberInput = False
+                    self._hasDecimal = False
+                    self.toggle_sign()
+                    return
+            op_map = {'+': '+', '-': '-', '×': '*', '÷': '/'}
+            self.input_operator(op_map[text])
+        elif text == '+/-':
+            self.toggle_sign()
+        elif text == 'x²':
+            self.calculate_square()
+        elif text == '∛x':
+            self.calculate_cube_root()
+        elif text == '√x':
+            self.calculate_square_root()
+        elif text == 'xʸ':
+            self.input_operator('**')
+        elif text == '=':
+            self.calculate_result()
+        elif text == 'C':
+            self.reset()
+        elif text == 'CE':
+            self.clear_entry()
+        elif text == '⌫':
+            self.backspace()
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        text = event.text()
+        if text in '0123456789':
+            self.on_button(text)
+        elif text == '+':
+            self.on_button('+')
+        elif text == '-':
+            self.on_button('-')
+        elif text == '*':
+            self.on_button('×')
+        elif text == '/':
+            self.on_button('÷')
+        elif text == '.':
+            self.on_button('.')
+        elif text == '^':
+            self.on_button('xʸ')
+        elif text.lower() == 'c':
+            self.on_button('C')
+        elif text == '=' or key == Qt.Key_Enter or key == Qt.Key_Return:
+            self.on_button('=')
+        elif key == Qt.Key_Backspace:
+            self.on_button('⌫')
+        elif key == Qt.Key_Delete:
+            self.on_button('CE')
+        else:
+            super().keyPressEvent(event)
+
+class CompoundInterestWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setMinimumWidth(340)
+        self.setMinimumHeight(420)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> A = P(1 + R/n)^(nt)")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(formula_label, alignment=Qt.AlignCenter)
+        self.ci_inputs = [QLineEdit() for _ in range(4)]
+        labels = ["Principal (P) :", "Rate (R%) :", "Time (t in Years):", "Compounding Frequency (n) :"]
+        for i, label in enumerate(labels):
+            lbl = QLabel(f"<b>{label}</b>")
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet("font-size: 16px;")
+            layout.addWidget(lbl, alignment=Qt.AlignCenter)
+            self.ci_inputs[i].setPlaceholderText("")
+            self.ci_inputs[i].setFixedWidth(180)
+            self.ci_inputs[i].setFixedHeight(32)
+            self.ci_inputs[i].setStyleSheet("font-size: 15px;")
+            layout.addWidget(self.ci_inputs[i], alignment=Qt.AlignCenter)
+        btn = QPushButton("Calculate")
+        btn.setFixedHeight(36)
+        btn.setFixedWidth(120)
+        btn.setProperty('eq', True)
+        btn.setStyleSheet("font-size: 15px;")
+        btn.clicked.connect(self.calculate_compound_interest)
+        layout.addWidget(btn, alignment=Qt.AlignCenter)
+        self.ci_output = QLabel("OUTPUT AREA")
+        self.ci_output.setAlignment(Qt.AlignCenter)
+        self.ci_output.setFixedHeight(28)
+        self.ci_output.setStyleSheet("font-size: 15px;")
+        layout.addWidget(self.ci_output, alignment=Qt.AlignCenter)
+
+    def calculate_compound_interest(self):
+        try:
+            p = float(self.ci_inputs[0].text())
+            r = float(self.ci_inputs[1].text()) / 100
+            t = float(self.ci_inputs[2].text())
+            n = float(self.ci_inputs[3].text())
+            amount = p * (1 + r / n) ** (n * t)
+            ci = amount - p
+            self.ci_output.setText(f"""Compound Interest: {ci:.2f}
+Total: {amount:.2f}""")
+        except Exception:
+            self.ci_output.setText("Invalid input.")
+
+class HeronWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        outer = QVBoxLayout(self)
+        outer.setAlignment(Qt.AlignCenter)
+        inner = QVBoxLayout()
+        inner.setSpacing(12)
+        inner.setContentsMargins(24, 24, 24, 24)
+        inner.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> Area = √s(s-a)(s-b)(s-c)")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        inner.addWidget(formula_label, alignment=Qt.AlignCenter)
+        self.heron_inputs = [QLineEdit() for _ in range(3)]
+        labels = ["First Side (a) :", "Second Side (b) :", "Third Side (c) :"]
+        for i, label in enumerate(labels):
+            lbl = QLabel(f"<b>{label}</b>")
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet("font-size: 16px;")
+            inner.addWidget(lbl, alignment=Qt.AlignCenter)
+            self.heron_inputs[i].setPlaceholderText("")
+            self.heron_inputs[i].setFixedWidth(180)
+            self.heron_inputs[i].setFixedHeight(32)
+            self.heron_inputs[i].setStyleSheet("font-size: 15px;")
+            inner.addWidget(self.heron_inputs[i], alignment=Qt.AlignCenter)
+        btn = QPushButton("Calculate")
+        btn.setFixedHeight(36)
+        btn.setFixedWidth(120)
+        btn.setProperty('eq', True)
+        btn.setStyleSheet("font-size: 15px;")
+        btn.clicked.connect(self.calculate_heron)
+        inner.addWidget(btn, alignment=Qt.AlignCenter)
+        self.heron_output = QLabel("OUTPUT AREA")
+        self.heron_output.setAlignment(Qt.AlignCenter)
+        self.heron_output.setFixedHeight(28)
+        self.heron_output.setStyleSheet("font-size: 15px;")
+        inner.addWidget(self.heron_output, alignment=Qt.AlignCenter)
+        outer.addLayout(inner)
+
+    def calculate_heron(self):
+        try:
+            a = float(self.heron_inputs[0].text())
+            b = float(self.heron_inputs[1].text())
+            c = float(self.heron_inputs[2].text())
+            s = (a + b + c) / 2
+            area = math.sqrt(s * (s - a) * (s - b) * (s - c))
+            self.heron_output.setText(f"Area: {area:.4f}")
+        except Exception:
+            self.heron_output.setText("Invalid input.")
+
+class QuadraticWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setMinimumWidth(340)
+        self.setMinimumHeight(420)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> x = [-b ± √(b²-4ac)] / 2a")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(formula_label, alignment=Qt.AlignCenter)
+        self.q_inputs = [QLineEdit() for _ in range(3)]
+        labels = ["First Coeffecient (a) :", "Second Coeffecient (b) :", "Third Coeffecient (c) :"]
+        for i, label in enumerate(labels):
+            lbl = QLabel(f"<b>{label}</b>")
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet("font-size: 16px;")
+            layout.addWidget(lbl, alignment=Qt.AlignCenter)
+            self.q_inputs[i].setPlaceholderText("")
+            self.q_inputs[i].setFixedWidth(180)
+            self.q_inputs[i].setFixedHeight(32)
+            self.q_inputs[i].setStyleSheet("font-size: 15px;")
+            layout.addWidget(self.q_inputs[i], alignment=Qt.AlignCenter)
+        btn = QPushButton("Calculate")
+        btn.setFixedHeight(36)
+        btn.setFixedWidth(120)
+        btn.setProperty('eq', True)
+        btn.setStyleSheet("font-size: 15px;")
+        btn.clicked.connect(self.calculate_quadratic)
+        layout.addWidget(btn, alignment=Qt.AlignCenter)
+        self.q_output = QLabel("OUTPUT AREA")
+        self.q_output.setAlignment(Qt.AlignCenter)
+        self.q_output.setFixedHeight(28)
+        self.q_output.setStyleSheet("font-size: 15px;")
+        layout.addWidget(self.q_output, alignment=Qt.AlignCenter)
+
+    def calculate_quadratic(self):
+        try:
+            a = float(self.q_inputs[0].text())
+            b = float(self.q_inputs[1].text())
+            c = float(self.q_inputs[2].text())
+            d = b ** 2 - 4 * a * c
+            if d < 0:
+                self.q_output.setText("No real roots.")
+            elif d == 0:
+                x = -b / (2 * a)
+                self.q_output.setText(f"One root: {x:.4f}")
+            else:
+                x1 = (-b + math.sqrt(d)) / (2 * a)
+                x2 = (-b - math.sqrt(d)) / (2 * a)
+                self.q_output.setText(f"Roots: {x1:.4f}, {x2:.4f}")
+        except Exception:
+            self.q_output.setText("Invalid input.")
+
+class SimpleInterestWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setMinimumWidth(340)
+        self.setMinimumHeight(420)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setAlignment(Qt.AlignCenter)
+        formula_label = QLabel("<b>Formula:</b> SI = (P * R * T) / 100")
+        formula_label.setAlignment(Qt.AlignCenter)
+        formula_label.setStyleSheet("font-size: 16px; margin-bottom: 10px;")
+        layout.addWidget(formula_label, alignment=Qt.AlignCenter)
+        self.si_inputs = [QLineEdit() for _ in range(3)]
+        labels = ["Principal (P):", "Rate (R%):", "Time (T in Years):"]
+        for i, label in enumerate(labels):
+            lbl = QLabel(f"<b>{label}</b>")
+            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet("font-size: 16px;")
+            layout.addWidget(lbl, alignment=Qt.AlignCenter)
+            self.si_inputs[i].setPlaceholderText("")
+            self.si_inputs[i].setFixedWidth(180)
+            self.si_inputs[i].setFixedHeight(32)
+            self.si_inputs[i].setStyleSheet("font-size: 15px;")
+            layout.addWidget(self.si_inputs[i], alignment=Qt.AlignCenter)
+        btn = QPushButton("Calculate")
+        btn.setFixedHeight(36)
+        btn.setFixedWidth(120)
+        btn.setProperty('eq', True)
+        btn.setStyleSheet("font-size: 15px;")
+        btn.clicked.connect(self.calculate_simple_interest)
+        layout.addWidget(btn, alignment=Qt.AlignCenter)
+        self.si_output = QLabel("OUTPUT AREA")
+        self.si_output.setAlignment(Qt.AlignCenter)
+        self.si_output.setFixedHeight(28)
+        self.si_output.setStyleSheet("font-size: 15px;")
+        layout.addWidget(self.si_output, alignment=Qt.AlignCenter)
+
+    def calculate_simple_interest(self):
+        try:
+            p = float(self.si_inputs[0].text())
+            r = float(self.si_inputs[1].text())
+            t = float(self.si_inputs[2].text())
+            si = (p * r * t) / 100
+            self.si_output.setText(f"Simple Interest: {si:.2f}")
+        except Exception:
+            self.si_output.setText("Invalid input.")
 
 class Calculator(QWidget):
     def __init__(self):
@@ -26,6 +687,16 @@ class Calculator(QWidget):
         self._theme_timer.setTimerType(Qt.CoarseTimer)
         self._theme_timer.timeout.connect(self._check_theme_change)
         self._theme_timer.start(1000)
+
+        def debug_logo() :
+            print(r"""
+ ___       ___      _      
+| _ \_  _ / __|__ _| |__   
+|  _/| | | (__/ _` | / _|  
+|_|  \_, |\___\__,_|_\__|  
+     |__/
+
+(C) Chill-Astro | 2026\n""")
 
     def closeEvent(self, event):
         self.settings.setValue("geometry", self.saveGeometry())
@@ -95,7 +766,7 @@ class Calculator(QWidget):
             QPushButton[eq="true"]:pressed { background: #bae6fd; }
         """
 
-    def initUI(self):
+    def initUI(self):        
         main_layout = QHBoxLayout(self)
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -114,17 +785,16 @@ class Calculator(QWidget):
             icon_codes = ['\ue900', '\ue901', '\ue902', '\ue903', '\ue919', '\ue915', '🛈']
         else:
             icomoon_font = None
-            icon_codes = ['C', '△', 'SI', 'CI', 'QE', '%', '🛈']
+            icon_codes = ['C', '△', 'SI', 'CI', 'QE', '🛈']
         self.calculators = [
-            ("Calculator", icon_codes[0], "ui.calculator_widget", "CalculatorWidget"),
-            ("Heron's Formula", icon_codes[1], "ui.heron_widget", "HeronWidget"),
-            ("Simple Interest", icon_codes[2], "ui.simple_interest_widget", "SimpleInterestWidget"),
-            ("Compound Interest", icon_codes[3], "ui.compound_interest_widget", "CompoundInterestWidget"),
-            ("Quadratic Equation", icon_codes[4], "ui.quadratic_widget", "QuadraticWidget"),
-            ("Discount Price", icon_codes[5], "ui.discount_widget", "DiscountWidget"),
-            ("About", icon_codes[6], "ui.about_widget", "AboutWidget"),
+            ("Calculator", icon_codes[0], CalculatorWidget),
+            ("Heron's Formula", icon_codes[1], HeronWidget),
+            ("Simple Interest", icon_codes[2], SimpleInterestWidget),
+            ("Compound Interest", icon_codes[3], CompoundInterestWidget),
+            ("Quadratic Equation", icon_codes[4], QuadraticWidget),            
+            ("About", icon_codes[6], AboutWidget),
         ]
-        for idx, (tooltip, icon_text, _, _) in enumerate(self.calculators):
+        for idx, (tooltip, icon_text, _) in enumerate(self.calculators):
             btn = QPushButton(icon_text)
             btn.setToolTip(tooltip)
             btn.setFixedHeight(40)
@@ -147,17 +817,15 @@ class Calculator(QWidget):
 
     def switch_calculator(self, idx):
         if idx not in self.loaded_widgets:
-            tooltip, icon_text, module_name, class_name = self.calculators[idx]
+            tooltip, icon_text, WidgetClass = self.calculators[idx]
             try:
-                module = importlib.import_module(module_name)
-                WidgetClass = getattr(module, class_name)
-                if class_name == "AboutWidget":
+                if WidgetClass == AboutWidget:
                     widget = WidgetClass(self.CURRENT_VERSION)
                 else:
                     widget = WidgetClass()
                 self.stack.addWidget(widget)
                 self.loaded_widgets[idx] = self.stack.indexOf(widget)
-            except (ImportError, AttributeError) as e:
+            except Exception as e:
                 print(f"Error loading widget: {e}")
                 return
         self.stack.setCurrentIndex(self.loaded_widgets[idx])
@@ -178,8 +846,22 @@ class Calculator(QWidget):
             else:
                 return "background: #e0e7ef; color: #4b5563; border-radius: 5px; font-size: 18px;"
 
+def debug_logo():    
+    print(r"""
+ ___       ___      _      
+| _ \_  _ / __|__ _| |__   
+|  _/| | | (__/ _` | / _|  
+|_|  \_, |\___\__,_|_\__|  
+     |__/
+
+(C) Chill-Astro | 2026
+""")            
+
 if __name__ == "__main__":
     import os
+
+    debug_logo()
+
     app = QApplication(sys.argv)
     
     # Load and apply the Inter font
