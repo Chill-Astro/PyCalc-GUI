@@ -72,7 +72,7 @@
 Please be aware: There are fraudulent repositories on GitHub that are cloning this project's name and using AI-generated readmes, but they contain **completely random and unrelated files in each release**. These are NOT official versions of this project.
 
 **ALWAYS ensure you are downloading or cloning this project ONLY from its official and legitimate source:**
-`https://github.com/Chill-Astro/PyCalc-GUI`
+`https://github.com/Chill-Astro/PyCalc`
 
 I am trying my best to report these people.
 
