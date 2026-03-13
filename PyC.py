@@ -2,13 +2,143 @@
 import sys
 import math
 import os
+import logging
 import requests
+import shutil
+import subprocess
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QFrame, QSizePolicy, QLabel, QLineEdit, QGridLayout)
 from PySide6.QtGui import QIcon, QFont, QFontDatabase
 from PySide6.QtCore import Qt, QSettings, QTimer, QThread, Signal
-from utils import resource_path, detect_os_theme
 
-UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/cc42d26ad09a37c594401d82fcbb8d2fa97f67ef/PyC_GUI_V.txt"  # Gist URL
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath(os.path.dirname(__file__)), relative_path)
+
+def detect_os_theme():
+    # Returns 'dark' or 'light'. Enhanced for KDE (KWin) and GNOME on Wayland.
+    try:
+        if sys.platform == 'win32':
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+                value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+                return 'dark' if value == 0 else 'light'
+        elif sys.platform == 'darwin':
+            result = subprocess.run([
+                'defaults', 'read', '-g', 'AppleInterfaceStyle'
+            ], capture_output=True, text=True)
+            return 'dark' if 'Dark' in result.stdout else 'light'
+        elif sys.platform.startswith('linux'):
+            # Wayland only: check XDG_SESSION_TYPE
+            if os.environ.get('XDG_SESSION_TYPE', '').lower() == 'wayland':
+                desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
+                # GNOME Wayland
+                if 'gnome' in desktop:
+                    try:
+                        # GNOME 42+ uses color-scheme, fallback to gtk-theme
+                        result = subprocess.run([
+                            'gsettings', 'get', 'org.gnome.desktop.interface', 'color-scheme'
+                        ], capture_output=True, text=True)
+                        if 'dark' in result.stdout.lower():
+                            return 'dark'
+                        elif 'light' in result.stdout.lower():
+                            return 'light'
+                    except Exception:
+                        pass
+                    # Fallback: check gtk-theme
+                    try:
+                        result = subprocess.run([
+                            'gsettings', 'get', 'org.gnome.desktop.interface', 'gtk-theme'
+                        ], capture_output=True, text=True)
+                        if 'dark' in result.stdout.lower():
+                            return 'dark'
+                    except Exception:
+                        pass
+                # KDE (KWin) Wayland
+                elif 'kde' in desktop or 'plasma' in desktop:
+                    # KDE Plasma 5.24+ uses color-scheme
+                    try:
+                        result = subprocess.run([
+                            'qdbus', 'org.kde.KWin', '/KWin', 'org.kde.KWin.supportInformation'
+                        ], capture_output=True, text=True)
+                        # Not strictly needed, but confirms KWin is running
+                    except Exception:
+                        pass
+                    # Try reading kdeglobals config for color scheme
+                    kdeglobals_path = os.path.expanduser('~/.config/kdeglobals')
+                    if os.path.exists(kdeglobals_path):
+                        try:
+                            with open(kdeglobals_path, 'r', encoding='utf-8') as f:
+                                for line in f:
+                                    if line.strip().startswith('ColorScheme='):  # KDE6
+                                        scheme = line.strip().split('=', 1)[-1].lower()
+                                        if 'dark' in scheme:
+                                            return 'dark'
+                                        elif 'light' in scheme:
+                                            return 'light'
+                                    elif line.strip().startswith('name='):  # KDE5
+                                        scheme = line.strip().split('=', 1)[-1].lower()
+                                        if 'dark' in scheme:
+                                            return 'dark'
+                                        elif 'light' in scheme:
+                                            return 'light'
+                        except Exception:
+                            pass
+                    # Fallback: check KDE_COLOR_SCHEME env
+                    kde_scheme = os.environ.get('KDE_COLOR_SCHEME', '').lower()
+                    if 'dark' in kde_scheme:
+                        return 'dark'
+                    elif 'light' in kde_scheme:
+                        return 'light'
+                # Fallback for other desktops on Wayland
+                gtk_theme = os.environ.get('GTK_THEME', '').lower()
+                if 'dark' in gtk_theme:
+                    return 'dark'
+                elif 'light' in gtk_theme:
+                    return 'light'
+            # Try darkman if available (works for both X11/Wayland)
+            if shutil.which('darkman'):
+                try:
+                    result = subprocess.run(['darkman', 'get'], capture_output=True, text=True)
+                    if 'dark' in result.stdout.lower():
+                        return 'dark'
+                    elif 'light' in result.stdout.lower():
+                        return 'light'
+                except Exception:
+                    pass
+            # Fallback: try GTK_THEME or KDE_COLOR_SCHEME
+            gtk_theme = os.environ.get('GTK_THEME', '').lower()
+            if 'dark' in gtk_theme:
+                return 'dark'
+            elif 'light' in gtk_theme:
+                return 'light'
+            kde_scheme = os.environ.get('KDE_COLOR_SCHEME', '').lower()
+            if 'dark' in kde_scheme:
+                return 'dark'
+            elif 'light' in kde_scheme:
+                return 'light'
+            # Fallback: try XDG_CURRENT_DESKTOP for GNOME/KDE
+            desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
+            if 'gnome' in desktop or 'kde' in desktop:
+                # Try to read gsettings (GNOME)
+                try:
+                    result = subprocess.run([
+                        'gsettings', 'get', 'org.gnome.desktop.interface', 'color-scheme'
+                    ], capture_output=True, text=True)
+                    if 'dark' in result.stdout.lower():
+                        return 'dark'
+                    elif 'light' in result.stdout.lower():
+                        return 'light'
+                except Exception:
+                    pass
+            # Default to dark
+            return 'dark'
+    except Exception:
+        return 'dark'
+    return 'dark'
+
+UPDATE_VERSION_URL = "https://gist.githubusercontent.com/Chill-Astro/738d8c4978d0a71a028235c375a30d1f/raw/PyC_V.txt"  # Gist URL
 
 class UpdateCheckThread(QThread):
     update_message = Signal(str)
@@ -26,13 +156,13 @@ class UpdateCheckThread(QThread):
             current_version_parts = [int(part) for part in self.current_version.split('.')]
 
             if latest_version_parts > current_version_parts:
-                msg = f"🎉 PyCalc GUI v{latest_version} is OUT NOW!"
+                msg = f"🎉 PyCalc v{latest_version} is OUT NOW!"
             elif latest_version_parts == current_version_parts:
-                msg = "🎉 PyCalc GUI is up to date!"
+                msg = "🎉 PyCalc is up to date!"
             elif latest_version_parts < current_version_parts:
-                msg = "⚠️ THIS IS NOT A PUBLIC RELEASE!"
+                msg = "⚠️ PyCalc TEST RELEASE!"
             else:
-                msg = "🎉 PyCalc GUI is up to date!"
+                msg = "🎉 PyCalc is up to date!"
         except Exception:
             msg = "⚠️ Please check your Internet Connection."
         self.update_message.emit(msg)
@@ -40,6 +170,7 @@ class UpdateCheckThread(QThread):
 class AboutWidget(QWidget):
     def __init__(self, current_version):
         super().__init__()
+        logging.debug("Initializing About page")
         self.CURRENT_VERSION = current_version
         self.initUI()
 
@@ -50,13 +181,13 @@ class AboutWidget(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         # App icon
         icon_label = QLabel()
-        icon_path = resource_path("PyC_GUI.ico")
+        icon_path = resource_path("PyC.ico")
         if os.path.exists(icon_path):
             icon_label.setPixmap(QIcon(icon_path).pixmap(128, 128))
         icon_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(icon_label, alignment=Qt.AlignCenter)
         # App name
-        name_label = QLabel(f"<b>PyCalc - GUI v{self.CURRENT_VERSION}</b>")
+        name_label = QLabel(f"<b>PyCalc v{self.CURRENT_VERSION}</b>")
         name_label.setAlignment(Qt.AlignCenter)
         name_label.setStyleSheet("font-size: 22px; margin-top: 8px;")
         layout.addWidget(name_label, alignment=Qt.AlignCenter)
@@ -85,6 +216,7 @@ class AboutWidget(QWidget):
         layout.addWidget(self.about_update_status, alignment=Qt.AlignCenter)
 
     def check_for_updates_about(self):
+        logging.debug("Checking for updates from About page")
         self.update_thread = UpdateCheckThread(self, self.CURRENT_VERSION)
         self.update_thread.update_message.connect(self.show_about_update_message)
         self.update_thread.start()
@@ -96,6 +228,7 @@ class AboutWidget(QWidget):
 class CalculatorWidget(QWidget):
     def __init__(self):
         super().__init__()
+        logging.debug("Initializing Calculator page")
         self.initUI()
         self.reset()
 
@@ -389,6 +522,7 @@ class CalculatorWidget(QWidget):
             self.handle_calculation_error()
 
     def on_button(self, text):
+        logging.debug(f"Button pressed: {text}")
         if text in '0123456789':
             self.input_digit(text)
         elif text == '.':
@@ -453,6 +587,7 @@ class CalculatorWidget(QWidget):
 class CompoundInterestWidget(QWidget):
     def __init__(self):
         super().__init__()
+        logging.debug("Initializing Compound Interest page")
         self.initUI()
 
     def initUI(self):
@@ -497,16 +632,20 @@ class CompoundInterestWidget(QWidget):
             r = float(self.ci_inputs[1].text()) / 100
             t = float(self.ci_inputs[2].text())
             n = float(self.ci_inputs[3].text())
+            logging.debug(f"Calculating compound interest with P={p}, R={r}, t={t}, n={n}")
             amount = p * (1 + r / n) ** (n * t)
             ci = amount - p
+            logging.debug(f"Compound Interest: {ci}, Total Amount: {amount}")
             self.ci_output.setText(f"""Compound Interest: {ci:.2f}
 Total: {amount:.2f}""")
-        except Exception:
+        except Exception as e:
+            logging.error(f"Error in compound interest calculation: {e}")
             self.ci_output.setText("Invalid input.")
 
 class HeronWidget(QWidget):
     def __init__(self):
         super().__init__()
+        logging.debug("Initializing Heron's Formula page")
         self.initUI()
 
     def initUI(self):
@@ -551,15 +690,19 @@ class HeronWidget(QWidget):
             a = float(self.heron_inputs[0].text())
             b = float(self.heron_inputs[1].text())
             c = float(self.heron_inputs[2].text())
+            logging.debug(f"Calculating area using Heron's formula with a={a}, b={b}, c={c}")
             s = (a + b + c) / 2
             area = math.sqrt(s * (s - a) * (s - b) * (s - c))
+            logging.debug(f"Calculated area: {area}")
             self.heron_output.setText(f"Area: {area:.4f}")
-        except Exception:
+        except Exception as e:
+            logging.error(f"Error in Heron's formula calculation: {e}")
             self.heron_output.setText("Invalid input.")
 
 class QuadraticWidget(QWidget):
     def __init__(self):
         super().__init__()
+        logging.debug("Initializing Quadratic Equation page")
         self.initUI()
 
     def initUI(self):
@@ -603,22 +746,28 @@ class QuadraticWidget(QWidget):
             a = float(self.q_inputs[0].text())
             b = float(self.q_inputs[1].text())
             c = float(self.q_inputs[2].text())
+            logging.debug(f"Calculating quadratic roots with a={a}, b={b}, c={c}")
             d = b ** 2 - 4 * a * c
             if d < 0:
+                logging.debug("No real roots")
                 self.q_output.setText("No real roots.")
             elif d == 0:
                 x = -b / (2 * a)
+                logging.debug(f"One root: {x}")
                 self.q_output.setText(f"One root: {x:.4f}")
             else:
                 x1 = (-b + math.sqrt(d)) / (2 * a)
                 x2 = (-b - math.sqrt(d)) / (2 * a)
+                logging.debug(f"Roots: {x1}, {x2}")
                 self.q_output.setText(f"Roots: {x1:.4f}, {x2:.4f}")
-        except Exception:
+        except Exception as e:
+            logging.error(f"Error in quadratic equation calculation: {e}")
             self.q_output.setText("Invalid input.")
 
 class SimpleInterestWidget(QWidget):
     def __init__(self):
         super().__init__()
+        logging.debug("Initializing Simple Interest page")
         self.initUI()
 
     def initUI(self):
@@ -662,21 +811,25 @@ class SimpleInterestWidget(QWidget):
             p = float(self.si_inputs[0].text())
             r = float(self.si_inputs[1].text())
             t = float(self.si_inputs[2].text())
+            logging.debug(f"Calculating simple interest with P={p}, R={r}, T={t}")
             si = (p * r * t) / 100
+            logging.debug(f"Simple Interest: {si}")
             self.si_output.setText(f"Simple Interest: {si:.2f}")
-        except Exception:
-            self.si_output.setText("Invalid input.")
+        except Exception as e:
+            logging.error(f"Error in simple interest calculation: {e}")
+            self.si_output.setText("Invalid input.")                            
 
 class Calculator(QWidget):
     def __init__(self):
         super().__init__()
-        self.CURRENT_VERSION = "3.14.1.3" # About Section + Bug Fixes + Performance Improvements
-        self.setWindowTitle("PyCalc GUI")
+        logging.debug("Initializing main Calculator window")
+        self.CURRENT_VERSION = "3.14.1.3" # About Section + Bug Fixes + Performance Improvements + New Logo
+        self.setWindowTitle("PyCalc")
         self.setMinimumSize(430, 540)
-        icon_path = resource_path("PyC_GUI.ico")
+        icon_path = resource_path("PyC.ico")
         if icon_path and os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
-        self.settings = QSettings("Chill-Astro", "PyCalc-GUI")
+        self.settings = QSettings("Chill-Astro", "PyCalc")
         geometry = self.settings.value("geometry")
         if geometry:
             self.restoreGeometry(geometry)
@@ -860,7 +1013,11 @@ def debug_logo():
 if __name__ == "__main__":
     import os
 
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
     debug_logo()
+
+    print("Hello User! Have fun trying my Project! :)\n")
 
     app = QApplication(sys.argv)
     
@@ -870,7 +1027,7 @@ if __name__ == "__main__":
         font_families = QFontDatabase.applicationFontFamilies(font_id)
         if font_families:
             inter_font = QFont(font_families[0])
-            app.setFont(inter_font)
+            app.setFont(inter_font)            
 
     calc = Calculator()
     calc.show()

@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['PyCalc-GUI.py'],
+    ['PyC.py'],
     pathex=[],
     binaries=[],
-    datas=[('Inter.ttf', '.'), ('icomoon.ttf', '.'), ('PyCalc-GUI.ico', '.')],
+    datas=[('Inter.ttf', '.'), ('icomoon.ttf', '.'), ('PyC_GUI.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='PyCalc-GUI',
+    name='PyC',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['PyCalc-GUI.ico'],
+    icon=['PyC.ico'],
 )

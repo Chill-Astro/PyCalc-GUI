@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/Chill-Astro/PyCalc/blob/main/PyC_GUI.ico" width="128px" height="128px" alt="PyCalc Logo">
+  <img src="https://github.com/Chill-Astro/PyCalc/blob/main/PyC.ico" width="128px" height="128px" alt="PyCalc Logo">
   <h1 align="center">PyCalc</h1>  
   <i>"Lamina ✦ for Every System!"</i>
   <br><br>

@@ -1,0 +1,9 @@
+STEP 1 : Install all Dependencies 
+
+pip install -r Reqs.txt
+
+STEP 2 : To export using Pyinstaller
+
+pyinstaller -F -i PyC.ico --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyC.ico;." PyC.py --noconsole
+
+Enjoy! :)
