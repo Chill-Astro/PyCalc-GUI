@@ -4,27 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-macos:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
-        pip install requests
-        pip install pyside6
-    - name: Build macOS executable
-      run: pyinstaller -F --add-data "Inter.ttf:." --add-data "icomoon.ttf:." --add-data "PyCalc-GUI.ico:." PyCalc-GUI.py --noconsole
-    - name: Upload macOS artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-executable
-        path: dist/PyCalc-GUI
 
   build-linux:
     runs-on: ubuntu-latest
@@ -37,13 +16,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller
-        pip install requests
-        pip install pyside6
+        pip install -r Reqs.txt
     - name: Build Linux executable
-      run: pyinstaller -F --add-data "Inter.ttf:." --add-data "icomoon.ttf:." --add-data "PyCalc-GUI.ico:." PyCalc-GUI.py --noconsole
+      run: pyinstaller -F -i PyC.ico --add-data "Inter.ttf;." --add-data "icomoon.ttf;." --add-data "PyC.ico;." PyC.py --noconsole
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
         name: linux-executable
-        path: dist/PyCalc-GUI
+        path: dist/PyC
